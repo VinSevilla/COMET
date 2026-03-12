@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
@@ -52,6 +53,12 @@ export default function Welcome() {
         style={styles.background}
       />
 
+      <LinearGradient
+        colors={["transparent", "rgba(10,20,35,0.5)", "rgba(10,20,35,0.95)"]}
+        locations={[0, 0.4, 1]}
+        style={styles.bottomGradient}
+      />
+
       <Animated.View
         style={[
           styles.center,
@@ -96,6 +103,13 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  bottomGradient: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "50%",
+  },
   center: {
     flex: 1,
     justifyContent: "flex-start",
@@ -127,7 +141,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   signupButton: {
-    backgroundColor: "#0F2A44",
+    backgroundColor: "transparent",
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",

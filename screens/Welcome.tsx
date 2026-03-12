@@ -98,8 +98,9 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
+    paddingTop: 110,
   },
   logo: {
     width: 200,
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
   },
   buttons: {
     paddingHorizontal: 32,
-    paddingBottom: 16,
+    paddingBottom: 40,
     gap: 12,
   },
   signupButton: {

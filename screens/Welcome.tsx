@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { WelcomeColors } from "../constants/theme";
 
 export default function Welcome() {
@@ -8,33 +9,34 @@ export default function Welcome() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../assets/images/space.jpg")}
+        source={require("../assets/images/comet-bg1.jpg")}
         style={styles.background}
       />
 
       <View style={styles.center}>
         <Image
-          source={require("../assets/images/CometBlack.png")}
+          source={require("../assets/images/CometLogo.png")}
           style={styles.logo}
         />
-        <Text style={styles.tagline}>One match at a time</Text>
+        <Text style={styles.cometText}>COMET</Text>
+        <Text style={styles.tagline}>One Match at a Time</Text>
       </View>
 
-      <View style={styles.buttons}>
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => router.push("/(auth)/login")}
-        >
-          <Text style={styles.buttonText}>Log in</Text>
-        </TouchableOpacity>
-
+      <SafeAreaView edges={["bottom"]} style={styles.buttons}>
         <TouchableOpacity
           style={styles.signupButton}
           onPress={() => router.push("/(auth)/signup")}
         >
           <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
-      </View>
+
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={() => router.push("/(auth)/login")}
+        >
+          <Text style={styles.buttonText}>Log in</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
     </View>
   );
 }
@@ -60,33 +62,39 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 18,
-    color: "white",
+    color: "#EAF6FF",
     marginTop: 12,
+    letterSpacing: 2,
+    fontStyle: "italic",
+    opacity: 0.85,
   },
   buttons: {
     paddingHorizontal: 32,
-    paddingBottom: 60,
+    paddingBottom: 16,
     gap: 12,
   },
   signupButton: {
-    backgroundColor: WelcomeColors.signupButton,
+    backgroundColor: "#0F2A44",
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
-    borderColor: WelcomeColors.signupBorder,
-    borderWidth: 1,
   },
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "white",
+    color: WelcomeColors.buttonText,
   },
   loginButton: {
-    backgroundColor: WelcomeColors.loginButton,
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "white",
+    borderColor: WelcomeColors.loginBorder,
+  },
+  cometText: {
+    fontSize: 36,
+    fontFamily: "TASAOrbiter-Bold",
+    color: "#EAF6FF",
+    letterSpacing: 6,
   },
 });

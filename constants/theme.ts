@@ -12,6 +12,8 @@ export const WelcomeColors = {
   loginButton: '#2A7DE1',
   signupButton: '#0F2A44',
   signupBorder: '#FFB347',
+  loginBorder: '#2A7DE1',
+  buttonText: '#EAF6FF',
 };
 
 export const Colors = {

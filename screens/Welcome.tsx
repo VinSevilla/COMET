@@ -114,11 +114,10 @@ const styles = StyleSheet.create({
     lineHeight: 40,
   },
   tagline: {
-    fontSize: 18,
+    fontSize: 16,
     color: "#EAF6FF",
-    marginTop: 4,
-    letterSpacing: 2,
-    fontStyle: "italic",
+    marginTop: -2,
+    letterSpacing: 1,
     opacity: 0.85,
   },
   buttons: {

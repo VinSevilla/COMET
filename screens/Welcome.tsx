@@ -1,10 +1,69 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useRef } from "react";
+import {
+  Animated,
+  Easing,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WelcomeColors } from "../constants/theme";
 
 export default function Welcome() {
   const router = useRouter();
+
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const contentFade = useRef(new Animated.Value(0)).current;
+  const contentSlide = useRef(new Animated.Value(30)).current;
+  const buttonsFade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Logo + text drifts up from cosmos and fades in
+    Animated.parallel([
+      Animated.timing(contentFade, {
+        toValue: 1,
+        duration: 900,
+        delay: 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentSlide, {
+        toValue: 0,
+        duration: 900,
+        delay: 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Buttons appear after content settles
+    Animated.timing(buttonsFade, {
+      toValue: 1,
+      duration: 600,
+      delay: 900,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+
+    // Continuous border rotation
+    Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 3000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
 
   return (
     <View style={styles.container}>
@@ -13,29 +72,47 @@ export default function Welcome() {
         style={styles.background}
       />
 
-      <View style={styles.center}>
+      <Animated.View
+        style={[
+          styles.center,
+          { opacity: contentFade, transform: [{ translateY: contentSlide }] },
+        ]}
+      >
         <Image
           source={require("../assets/images/CometLogo.png")}
           style={styles.logo}
         />
         <Text style={styles.cometText}>COMET</Text>
         <Text style={styles.tagline}>One Match at a Time</Text>
-      </View>
+      </Animated.View>
 
-      <SafeAreaView edges={["bottom"]} style={styles.buttons}>
-        <TouchableOpacity
-          style={styles.signupButton}
-          onPress={() => router.push("/(auth)/signup")}
-        >
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
+      <SafeAreaView edges={["bottom"]}>
+        <Animated.View style={[styles.buttons, { opacity: buttonsFade }]}>
+          {/* Sign Up — rotating comet-orbit border */}
+          <View style={styles.signupBorderContainer}>
+            <Animated.View
+              style={[styles.rotatingGradient, { transform: [{ rotate: spin }] }]}
+            >
+              <LinearGradient
+                colors={["#FFB347", "transparent", "transparent", "#FFB347"]}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+            <TouchableOpacity
+              style={styles.signupButton}
+              onPress={() => router.push("/(auth)/signup")}
+            >
+              <Text style={styles.buttonText}>SIGN UP</Text>
+            </TouchableOpacity>
+          </View>
 
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => router.push("/(auth)/login")}
-        >
-          <Text style={styles.buttonText}>Log in</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => router.push("/(auth)/login")}
+          >
+            <Text style={styles.buttonText}>LOG IN</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </SafeAreaView>
     </View>
   );
@@ -60,6 +137,12 @@ const styles = StyleSheet.create({
     height: 200,
     resizeMode: "contain",
   },
+  cometText: {
+    fontSize: 36,
+    fontFamily: "TASAOrbiter-Bold",
+    color: "#EAF6FF",
+    letterSpacing: 6,
+  },
   tagline: {
     fontSize: 18,
     color: "#EAF6FF",
@@ -73,15 +156,30 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 12,
   },
+  signupBorderContainer: {
+    borderRadius: 30,
+    overflow: "hidden",
+  },
+  rotatingGradient: {
+    position: "absolute",
+    width: 600,
+    height: 600,
+    top: "50%",
+    left: "50%",
+    marginTop: -300,
+    marginLeft: -300,
+  },
   signupButton: {
     backgroundColor: "#0F2A44",
     paddingVertical: 16,
-    borderRadius: 30,
+    margin: 2,
+    borderRadius: 28,
     alignItems: "center",
   },
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
+    fontFamily: "TASAOrbiter-SemiBold",
     color: WelcomeColors.buttonText,
   },
   loginButton: {
@@ -90,11 +188,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: WelcomeColors.loginBorder,
-  },
-  cometText: {
-    fontSize: 36,
-    fontFamily: "TASAOrbiter-Bold",
-    color: "#EAF6FF",
-    letterSpacing: 6,
   },
 });

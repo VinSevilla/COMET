@@ -13,6 +13,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     "TASAOrbiter-Bold": require("../assets/fonts/TASAOrbiter-Bold.ttf"),
+    "TASAOrbiter-SemiBold": require("../assets/fonts/TASAOrbiter-SemiBold.ttf"),
   });
 
   useEffect(() => {

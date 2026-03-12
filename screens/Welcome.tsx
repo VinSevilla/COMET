@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { WelcomeColors } from "../constants/theme";
 
 export default function Welcome() {
   const router = useRouter();
@@ -21,17 +22,17 @@ export default function Welcome() {
 
       <View style={styles.buttons}>
         <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => router.push("/(auth)/signup")}
+          style={styles.loginButton}
+          onPress={() => router.push("/(auth)/login")}
         >
-          <Text style={styles.primaryText}>Sign Up</Text>
+          <Text style={styles.buttonText}>Log in</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/(auth)/login")}
+          style={styles.signupButton}
+          onPress={() => router.push("/(auth)/signup")}
         >
-          <Text style={styles.secondaryText}>Log In</Text>
+          <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -67,28 +68,25 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
     gap: 12,
   },
-  primaryButton: {
-    backgroundColor: "white",
+  signupButton: {
+    backgroundColor: WelcomeColors.signupButton,
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
+    borderColor: WelcomeColors.signupBorder,
+    borderWidth: 1,
   },
-  primaryText: {
+  buttonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "black",
+    color: "white",
   },
-  secondaryButton: {
-    backgroundColor: "transparent",
+  loginButton: {
+    backgroundColor: WelcomeColors.loginButton,
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "white",
-  },
-  secondaryText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "white",
   },
 });

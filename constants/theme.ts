@@ -8,6 +8,12 @@ import { Platform } from 'react-native';
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
+export const WelcomeColors = {
+  loginButton: '#2A7DE1',
+  signupButton: '#0F2A44',
+  signupBorder: '#FFB347',
+};
+
 export const Colors = {
   light: {
     text: '#11181C',

@@ -1,4 +1,3 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
@@ -11,18 +10,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { WelcomeColors } from "../constants/theme";
 
 export default function Welcome() {
   const router = useRouter();
 
-  const rotateAnim = useRef(new Animated.Value(0)).current;
   const contentFade = useRef(new Animated.Value(0)).current;
   const contentSlide = useRef(new Animated.Value(30)).current;
   const buttonsFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Logo + text drifts up from cosmos and fades in
     Animated.parallel([
       Animated.timing(contentFade, {
         toValue: 1,
@@ -40,7 +36,6 @@ export default function Welcome() {
       }),
     ]).start();
 
-    // Buttons appear after content settles
     Animated.timing(buttonsFade, {
       toValue: 1,
       duration: 600,
@@ -48,22 +43,7 @@ export default function Welcome() {
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-
-    // Continuous border rotation
-    Animated.loop(
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 3000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    ).start();
   }, []);
-
-  const spin = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
 
   return (
     <View style={styles.container}>
@@ -88,23 +68,12 @@ export default function Welcome() {
 
       <SafeAreaView edges={["bottom"]}>
         <Animated.View style={[styles.buttons, { opacity: buttonsFade }]}>
-          {/* Sign Up — rotating comet-orbit border */}
-          <View style={styles.signupBorderContainer}>
-            <Animated.View
-              style={[styles.rotatingGradient, { transform: [{ rotate: spin }] }]}
-            >
-              <LinearGradient
-                colors={["#FFB347", "transparent", "transparent", "#FFB347"]}
-                style={StyleSheet.absoluteFill}
-              />
-            </Animated.View>
-            <TouchableOpacity
-              style={styles.signupButton}
-              onPress={() => router.push("/(auth)/signup")}
-            >
-              <Text style={styles.buttonText}>SIGN UP</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.signupButton}
+            onPress={() => router.push("/(auth)/signup")}
+          >
+            <Text style={styles.buttonText}>SIGN UP</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.loginButton}
@@ -139,14 +108,15 @@ const styles = StyleSheet.create({
   },
   cometText: {
     fontSize: 36,
-    fontFamily: "TASAOrbiter-Bold",
+    fontFamily: "Montserrat-Bold",
     color: "#EAF6FF",
     letterSpacing: 6,
+    lineHeight: 40,
   },
   tagline: {
     fontSize: 18,
     color: "#EAF6FF",
-    marginTop: 12,
+    marginTop: 4,
     letterSpacing: 2,
     fontStyle: "italic",
     opacity: 0.85,
@@ -156,37 +126,23 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 12,
   },
-  signupBorderContainer: {
-    borderRadius: 30,
-    overflow: "hidden",
-  },
-  rotatingGradient: {
-    position: "absolute",
-    width: 600,
-    height: 600,
-    top: "50%",
-    left: "50%",
-    marginTop: -300,
-    marginLeft: -300,
-  },
   signupButton: {
     backgroundColor: "#0F2A44",
     paddingVertical: 16,
-    margin: 2,
-    borderRadius: 28,
+    borderRadius: 30,
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FFB347",
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: "600",
-    fontFamily: "TASAOrbiter-SemiBold",
-    color: WelcomeColors.buttonText,
+    fontFamily: "Montserrat-Regular",
+    color: "#FFFFFF",
   },
   loginButton: {
+    backgroundColor: "#2A7DE1",
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: WelcomeColors.loginBorder,
   },
 });

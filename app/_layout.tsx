@@ -12,8 +12,8 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
-    "TASAOrbiter-Bold": require("../assets/fonts/TASAOrbiter-Bold.ttf"),
-    "TASAOrbiter-SemiBold": require("../assets/fonts/TASAOrbiter-SemiBold.ttf"),
+    "Montserrat-Bold": require("../assets/fonts/Montserrat-Bold.ttf"),
+    "Montserrat-Regular": require("../assets/fonts/Montserrat-Regular.ttf"),
   });
 
   useEffect(() => {

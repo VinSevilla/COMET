@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Canvas, Path, Skia } from "@shopify/react-native-skia";
 import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
 import { LinearGradient } from "expo-linear-gradient";
@@ -12,7 +13,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 const BORDER_WIDTH = 2;
 const STREAK_DURATION = 8000;
@@ -157,6 +161,7 @@ export default function Welcome() {
         style={styles.background}
       />
 
+      {/* Bottom screen gradient overlay */}
       <LinearGradient
         colors={["rgba(10,20,35,0)", "rgba(10,20,35,0.85)", "rgba(10,20,35,1)"]}
         locations={[0, 0.5, 1]}
@@ -188,6 +193,7 @@ export default function Welcome() {
                 setBtnDims({ width, height });
               }}
             >
+              {/* Sign Up — top/bottom inner shadow */}
               <LinearGradient
                 colors={[
                   "rgba(0,0,0,0.50)",
@@ -198,6 +204,7 @@ export default function Welcome() {
                 style={StyleSheet.absoluteFill}
                 pointerEvents="none"
               />
+              {/* Sign Up — left/right inner shadow */}
               <LinearGradient
                 colors={[
                   "rgba(0,0,0,0.30)",
@@ -210,11 +217,12 @@ export default function Welcome() {
                 style={StyleSheet.absoluteFill}
                 pointerEvents="none"
               />
+              {/* Sign Up — orange side glow */}
               <LinearGradient
                 colors={[
-                  "rgba(180,80,0,0.15)",
+                  "rgba(180,80,0,0.22)",
                   "rgba(180,80,0,0)",
-                  "rgba(180,80,0,0.15)",
+                  "rgba(180,80,0,0.22)",
                 ]}
                 locations={[0, 0.5, 1]}
                 start={{ x: 0, y: 0.5 }}
@@ -231,6 +239,7 @@ export default function Welcome() {
             style={styles.loginButton}
             onPress={() => router.push("/(auth)/login")}
           >
+            {/* Log In — left/right inner shadow */}
             <LinearGradient
               colors={["rgba(0,0,0,0.40)", "rgba(0,0,0,0)", "rgba(0,0,0,0.40)"]}
               locations={[0, 0.5, 1]}
@@ -248,9 +257,11 @@ export default function Welcome() {
         onPress={toggleMusic}
         style={[styles.musicButton, { top: insets.top + 8 }]}
       >
-        <Text style={[styles.musicIcon, { color: musicOn ? "#FFB347" : "rgba(255,255,255,0.4)" }]}>
-          ♪
-        </Text>
+        <Ionicons
+          name={musicOn ? "volume-high" : "volume-mute"}
+          size={22}
+          color={musicOn ? "#FFB347" : "rgba(255,255,255,0.4)"}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -327,8 +338,5 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 16,
     padding: 10,
-  },
-  musicIcon: {
-    fontSize: 20,
   },
 });

@@ -1,4 +1,5 @@
 import { Canvas, Path, Skia } from "@shopify/react-native-skia";
+import { useAudioPlayer } from "expo-audio";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const BORDER_WIDTH = 2;
 const STREAK_DURATION = 8000;
@@ -84,7 +85,23 @@ export default function Welcome() {
   const contentSlide = useRef(new Animated.Value(30)).current;
   const buttonsFade = useRef(new Animated.Value(0)).current;
 
+  const insets = useSafeAreaInsets();
   const [btnDims, setBtnDims] = useState({ width: 311, height: 52 });
+  const [musicOn, setMusicOn] = useState(false);
+  const player = useAudioPlayer(
+    require("../assets/audio/743831__viramiller__tranquil-tones.mp3"),
+  );
+
+  const toggleMusic = () => {
+    if (musicOn) {
+      player.pause();
+    } else {
+      player.loop = true;
+      player.volume = 0.3;
+      player.play();
+    }
+    setMusicOn((prev) => !prev);
+  };
 
   useEffect(() => {
     Animated.parallel([
@@ -206,6 +223,15 @@ export default function Welcome() {
           </TouchableOpacity>
         </Animated.View>
       </SafeAreaView>
+
+      <TouchableOpacity
+        onPress={toggleMusic}
+        style={[styles.musicButton, { top: insets.top + 8 }]}
+      >
+        <Text style={[styles.musicIcon, { color: musicOn ? "#FFB347" : "rgba(255,255,255,0.4)" }]}>
+          ♪
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -276,5 +302,13 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     overflow: "hidden",
+  },
+  musicButton: {
+    position: "absolute",
+    right: 16,
+    padding: 10,
+  },
+  musicIcon: {
+    fontSize: 20,
   },
 });

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
@@ -116,6 +117,149 @@ const INTEREST_CATEGORIES = [
     interests: ["Cooking", "Baking", "Gardening", "Board games"],
   },
 ];
+
+// ─── Birthday Drum Picker ─────────────────────────────────────────────────────
+
+const ITEM_HEIGHT = 52;
+const PICKER_HEIGHT = ITEM_HEIGHT * 5;
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
+const _CUR_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 83 }, (_, i) => String(_CUR_YEAR - 18 - i));
+
+function PickerColumn({
+  items,
+  selectedIdx,
+  scrollRef,
+  setter,
+}: {
+  items: string[];
+  selectedIdx: number;
+  scrollRef: { current: ScrollView | null };
+  setter: (i: number) => void;
+}) {
+  function onScrollEnd(e: { nativeEvent: { contentOffset: { y: number } } }) {
+    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    setter(Math.max(0, Math.min(idx, items.length - 1)));
+  }
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        ref={scrollRef as any}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_HEIGHT}
+        decelerationRate="fast"
+        onMomentumScrollEnd={onScrollEnd}
+        onScrollEndDrag={onScrollEnd}
+        contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
+        style={{ height: PICKER_HEIGHT }}
+      >
+        {items.map((item, i) => (
+          <View
+            key={item}
+            style={{ height: ITEM_HEIGHT, justifyContent: "center", alignItems: "center" }}
+          >
+            <Text
+              style={{
+                color: i === selectedIdx ? "#EAF6FF" : "rgba(234,246,255,0.28)",
+                fontSize: i === selectedIdx ? 20 : 16,
+                fontFamily: i === selectedIdx ? "Montserrat-Bold" : "Montserrat-Regular",
+              }}
+            >
+              {item}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+      <LinearGradient
+        colors={["#000000", "transparent"]}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, height: ITEM_HEIGHT * 2 }}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={["transparent", "#000000"]}
+        style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: ITEM_HEIGHT * 2 }}
+        pointerEvents="none"
+      />
+    </View>
+  );
+}
+
+function BirthdayPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const parts = value ? value.split("-") : [];
+  const defaultYearIdx = Math.max(0, YEARS.indexOf(String(_CUR_YEAR - 26)));
+
+  const [monthIdx, setMonthIdx] = useState(() =>
+    parts[1] ? Math.max(0, parseInt(parts[1], 10) - 1) : 0
+  );
+  const [dayIdx, setDayIdx] = useState(() =>
+    parts[2] ? Math.max(0, parseInt(parts[2], 10) - 1) : 0
+  );
+  const [yearIdx, setYearIdx] = useState(() => {
+    if (!parts[0]) return defaultYearIdx;
+    const idx = YEARS.indexOf(parts[0]);
+    return idx >= 0 ? idx : defaultYearIdx;
+  });
+
+  const monthRef = useRef<ScrollView>(null);
+  const dayRef = useRef<ScrollView>(null);
+  const yearRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    onChange(
+      `${YEARS[yearIdx]}-${String(monthIdx + 1).padStart(2, "0")}-${DAYS[dayIdx]}`
+    );
+  }, [monthIdx, dayIdx, yearIdx]);
+
+  useEffect(() => {
+    monthRef.current?.scrollTo({ y: monthIdx * ITEM_HEIGHT, animated: false });
+    dayRef.current?.scrollTo({ y: dayIdx * ITEM_HEIGHT, animated: false });
+    yearRef.current?.scrollTo({ y: yearIdx * ITEM_HEIGHT, animated: false });
+  }, []);
+
+  return (
+    <View
+      style={{
+        backgroundColor: "#0d1a2d",
+        borderRadius: 16,
+        overflow: "hidden",
+        borderWidth: 1,
+        borderColor: "rgba(42,125,225,0.2)",
+        marginTop: 8,
+      }}
+    >
+      {/* Selection band */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: ITEM_HEIGHT * 2,
+          left: 0,
+          right: 0,
+          height: ITEM_HEIGHT,
+          borderTopWidth: 1,
+          borderBottomWidth: 1,
+          borderColor: "rgba(42,125,225,0.5)",
+          backgroundColor: "rgba(42,125,225,0.06)",
+          zIndex: 1,
+        }}
+      />
+      <View style={{ flexDirection: "row" }}>
+        <PickerColumn items={MONTHS} selectedIdx={monthIdx} scrollRef={monthRef} setter={setMonthIdx} />
+        <PickerColumn items={DAYS} selectedIdx={dayIdx} scrollRef={dayRef} setter={setDayIdx} />
+        <PickerColumn items={YEARS} selectedIdx={yearIdx} scrollRef={yearRef} setter={setYearIdx} />
+      </View>
+    </View>
+  );
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -335,13 +479,9 @@ export default function Onboarding() {
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>When's your birthday?</Text>
             <Text style={styles.stepSubtitle}>Your age will be shown on your profile.</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor="#555"
+            <BirthdayPicker
               value={data.birthday}
-              onChangeText={(v) => update({ birthday: v })}
-              keyboardType="numbers-and-punctuation"
+              onChange={(v) => update({ birthday: v })}
             />
           </View>
         );
@@ -640,6 +780,7 @@ const styles = StyleSheet.create({
   backArrow: {
     fontSize: 24,
     color: "#fff",
+    fontFamily: "Montserrat-Regular",
   },
   content: {
     flex: 1,
@@ -652,12 +793,13 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     fontSize: 26,
-    fontWeight: "bold",
+    fontFamily: "Montserrat-Bold",
     color: "#fff",
     marginBottom: 8,
   },
   stepSubtitle: {
     fontSize: 15,
+    fontFamily: "Montserrat-Regular",
     color: "#888",
     marginBottom: 24,
   },
@@ -667,6 +809,7 @@ const styles = StyleSheet.create({
     padding: 14,
     color: "#fff",
     fontSize: 16,
+    fontFamily: "Montserrat-Regular",
     marginBottom: 16,
   },
   optionButton: {
@@ -684,10 +827,11 @@ const styles = StyleSheet.create({
   optionText: {
     color: "#aaa",
     fontSize: 16,
+    fontFamily: "Montserrat-Regular",
   },
   optionTextSelected: {
     color: "#2A7DE1",
-    fontWeight: "bold",
+    fontFamily: "Montserrat-Bold",
   },
   primaryButton: {
     backgroundColor: "#2A7DE1",
@@ -699,7 +843,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Montserrat-Bold",
   },
   skipButton: {
     alignItems: "center",
@@ -708,6 +852,7 @@ const styles = StyleSheet.create({
   skipText: {
     color: "#555",
     fontSize: 14,
+    fontFamily: "Montserrat-Regular",
   },
   photoGrid: {
     flexDirection: "row",
@@ -740,6 +885,7 @@ const styles = StyleSheet.create({
   removePhotoText: {
     color: "#fff",
     fontSize: 12,
+    fontFamily: "Montserrat-Regular",
   },
   addPhotoSlot: {
     width: 100,
@@ -755,11 +901,12 @@ const styles = StyleSheet.create({
   addPhotoText: {
     color: "#555",
     fontSize: 32,
+    fontFamily: "Montserrat-Regular",
   },
   sectionLabel: {
     color: "#555",
     fontSize: 12,
-    fontWeight: "bold",
+    fontFamily: "Montserrat-Bold",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginTop: 20,
@@ -774,16 +921,19 @@ const styles = StyleSheet.create({
   answeredPromptLabel: {
     color: "#2A7DE1",
     fontSize: 12,
+    fontFamily: "Montserrat-Regular",
     marginBottom: 4,
   },
   answeredPromptAnswer: {
     color: "#fff",
     fontSize: 15,
+    fontFamily: "Montserrat-Regular",
     marginBottom: 8,
   },
   removeText: {
     color: "#e85d4a",
     fontSize: 13,
+    fontFamily: "Montserrat-Regular",
   },
   promptAnswerBox: {
     backgroundColor: "#1a1a1a",
@@ -794,11 +944,13 @@ const styles = StyleSheet.create({
   activePromptLabel: {
     color: "#2A7DE1",
     fontSize: 14,
+    fontFamily: "Montserrat-Regular",
     marginBottom: 10,
   },
   promptInput: {
     color: "#fff",
     fontSize: 15,
+    fontFamily: "Montserrat-Regular",
     minHeight: 80,
     marginBottom: 12,
   },
@@ -814,10 +966,12 @@ const styles = StyleSheet.create({
   promptOptionText: {
     color: "#fff",
     fontSize: 15,
+    fontFamily: "Montserrat-Regular",
   },
   seeMore: {
     color: "#2A7DE1",
     fontSize: 14,
+    fontFamily: "Montserrat-Regular",
     textAlign: "center",
     paddingVertical: 16,
   },
@@ -842,23 +996,27 @@ const styles = StyleSheet.create({
   chipText: {
     color: "#aaa",
     fontSize: 14,
+    fontFamily: "Montserrat-Regular",
   },
   chipTextSelected: {
     color: "#2A7DE1",
+    fontFamily: "Montserrat-Bold",
   },
   orbitExplain: {
     color: "#fff",
     fontSize: 18,
+    fontFamily: "Montserrat-Regular",
     lineHeight: 28,
     marginBottom: 20,
   },
   orbitHighlight: {
     color: "#2A7DE1",
-    fontWeight: "bold",
+    fontFamily: "Montserrat-Bold",
   },
   orbitBody: {
     color: "#888",
     fontSize: 16,
+    fontFamily: "Montserrat-Regular",
     lineHeight: 26,
   },
   nextButton: {
@@ -874,6 +1032,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Montserrat-Bold",
   },
 });

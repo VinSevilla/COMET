@@ -121,8 +121,8 @@ export default function Welcome() {
       />
 
       <LinearGradient
-        colors={["transparent", "rgba(10,20,35,0.5)", "rgba(10,20,35,0.95)"]}
-        locations={[0, 0.4, 1]}
+        colors={["rgba(10,20,35,0)", "rgba(10,20,35,0.85)", "rgba(10,20,35,1)"]}
+        locations={[0, 0.5, 1]}
         style={styles.bottomGradient}
       />
 
@@ -151,6 +151,40 @@ export default function Welcome() {
                 setBtnDims({ width, height });
               }}
             >
+              <LinearGradient
+                colors={[
+                  "rgba(0,0,0,0.50)",
+                  "rgba(0,0,0,0)",
+                  "rgba(0,0,0,0.40)",
+                ]}
+                locations={[0, 0.4, 1]}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+              <LinearGradient
+                colors={[
+                  "rgba(0,0,0,0.30)",
+                  "rgba(0,0,0,0)",
+                  "rgba(0,0,0,0.30)",
+                ]}
+                locations={[0, 0.5, 1]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+              <LinearGradient
+                colors={[
+                  "rgba(180,80,0,0.15)",
+                  "rgba(180,80,0,0)",
+                  "rgba(180,80,0,0.15)",
+                ]}
+                locations={[0, 0.5, 1]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
               <Text style={styles.buttonText}>SIGN UP</Text>
             </TouchableOpacity>
             <PillStreak width={btnDims.width} height={btnDims.height} />
@@ -160,6 +194,14 @@ export default function Welcome() {
             style={styles.loginButton}
             onPress={() => router.push("/(auth)/login")}
           >
+            <LinearGradient
+              colors={["rgba(0,0,0,0.40)", "rgba(0,0,0,0)", "rgba(0,0,0,0.40)"]}
+              locations={[0, 0.5, 1]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
             <Text style={styles.buttonText}>LOG IN</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -182,7 +224,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: "50%",
+    height: "75%",
   },
   center: {
     flex: 1,
@@ -215,12 +257,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   signupButton: {
-    backgroundColor: "#0F2A44",
+    backgroundColor: "#0B1E3D",
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
     borderWidth: BORDER_WIDTH,
     borderColor: "#FFB347",
+    overflow: "hidden",
   },
   buttonText: {
     fontSize: 16,
@@ -232,5 +275,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
+    overflow: "hidden",
   },
 });

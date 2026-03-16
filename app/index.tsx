@@ -1,8 +1,10 @@
 import { Redirect } from "expo-router";
-import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Index() {
-  const [isLoggedIn] = useState(false); // toggle to true to test tab navigation
+  const { session, loading } = useAuth();
 
-  return <Redirect href={isLoggedIn ? "/(tabs)" : "/(auth)/welcome"} />;
+  if (loading) return null;
+
+  return <Redirect href={session ? "/(tabs)" : "/(auth)/welcome"} />;
 }

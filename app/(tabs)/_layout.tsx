@@ -1,13 +1,20 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAuth } from "@/context/AuthContext";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { session, loading } = useAuth();
+
+  if (loading) return null;
+
+  // If no session, user signed out — send them back to auth
+  if (!session) return <Redirect href="/(auth)/welcome" />;
 
   return (
     <Tabs
@@ -37,10 +44,7 @@ export default function TabLayout() {
         }}
       />
 
-      <Tabs.Screen
-        name="browse"
-        options={{ title: "Browse" }}
-      />
+      <Tabs.Screen name="browse" options={{ title: "Browse" }} />
     </Tabs>
   );
 }

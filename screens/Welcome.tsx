@@ -1,5 +1,5 @@
 import { Canvas, Path, Skia } from "@shopify/react-native-skia";
-import { useAudioPlayer } from "expo-audio";
+import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -87,10 +87,30 @@ export default function Welcome() {
 
   const insets = useSafeAreaInsets();
   const [btnDims, setBtnDims] = useState({ width: 311, height: 52 });
-  const [musicOn, setMusicOn] = useState(false);
+  const [musicOn, setMusicOn] = useState(true);
   const player = useAudioPlayer(
     require("../assets/audio/743831__viramiller__tranquil-tones.mp3"),
   );
+
+  useEffect(() => {
+    setAudioModeAsync({ playsInSilentMode: false });
+    player.loop = true;
+    player.volume = 0;
+    player.play();
+    const start = Date.now();
+    const target = 0.3;
+    const duration = 1000;
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - start;
+      if (elapsed >= duration) {
+        player.volume = target;
+        clearInterval(interval);
+      } else {
+        player.volume = (elapsed / duration) * target;
+      }
+    }, 16);
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleMusic = () => {
     if (musicOn) {

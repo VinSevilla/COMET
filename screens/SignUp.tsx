@@ -46,8 +46,8 @@ export default function SignUp() {
       return;
     }
 
-    // Account created — AuthContext picks up the session and index.tsx
-    // redirects to /(tabs) automatically.
+    // Account created — send them to onboarding to build their profile
+    router.replace("/(auth)/onboarding");
   }
 
   return (

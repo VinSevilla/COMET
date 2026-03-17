@@ -60,77 +60,79 @@ export default function SignUp() {
         <Text style={styles.backArrow}>←</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Create account</Text>
+      <View style={styles.formWrapper}>
+        <Text style={styles.title}>Create account</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#888"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-
-      <View style={styles.inputWrapper}>
         <TextInput
-          style={styles.inputWithIcon}
-          placeholder="Password"
+          style={styles.input}
+          placeholder="Email"
           placeholderTextColor="#888"
-          secureTextEntry={!showPassword}
-          value={password}
-          onChangeText={setPassword}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
         />
-        <TouchableOpacity
-          style={styles.eyeButton}
-          onPress={() => setShowPassword((v) => !v)}
-        >
-          <Ionicons
-            name={showPassword ? "eye" : "eye-off"}
-            size={20}
-            color="#555"
+
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.inputWithIcon}
+            placeholder="Password"
+            placeholderTextColor="#888"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
           />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowPassword((v) => !v)}
+          >
+            <Ionicons
+              name={showPassword ? "eye" : "eye-off"}
+              size={20}
+              color="#555"
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.inputWithIcon}
+            placeholder="Confirm password"
+            placeholderTextColor="#888"
+            secureTextEntry={!showConfirmPassword}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowConfirmPassword((v) => !v)}
+          >
+            <Ionicons
+              name={showConfirmPassword ? "eye" : "eye-off"}
+              size={20}
+              color="#555"
+            />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleSignUp}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Sign Up</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+          <Text style={styles.switchText}>
+            Already have an account? <Text style={styles.switchLink}>Log in</Text>
+          </Text>
         </TouchableOpacity>
       </View>
-
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.inputWithIcon}
-          placeholder="Confirm password"
-          placeholderTextColor="#888"
-          secureTextEntry={!showConfirmPassword}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
-        <TouchableOpacity
-          style={styles.eyeButton}
-          onPress={() => setShowConfirmPassword((v) => !v)}
-        >
-          <Ionicons
-            name={showConfirmPassword ? "eye" : "eye-off"}
-            size={20}
-            color="#555"
-          />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleSignUp}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Sign Up</Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-        <Text style={styles.switchText}>
-          Already have an account? <Text style={styles.switchLink}>Log in</Text>
-        </Text>
-      </TouchableOpacity>
     </LinearGradient>
   );
 }
@@ -141,9 +143,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     justifyContent: "center",
   },
+  formWrapper: {
+    marginTop: -300,
+  },
   backButton: {
     position: "absolute",
-    top: 16,
+    top: 45,
     left: 16,
     padding: 10,
   },

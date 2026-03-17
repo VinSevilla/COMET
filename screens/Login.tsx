@@ -1,5 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "@/lib/supabase";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -44,61 +44,67 @@ export default function Login() {
   }
 
   return (
-    <LinearGradient colors={["#164271", "#000000"]} style={[styles.container, { paddingTop: insets.top }]}>
+    <LinearGradient
+      colors={["#164271", "#000000"]}
+      style={[styles.container, { paddingTop: insets.top }]}
+    >
       <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
         <Text style={styles.backArrow}>←</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Welcome back</Text>
+      <View style={styles.formWrapper}>
+        <Text style={styles.title}>Welcome back</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#888"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-
-      <View style={styles.inputWrapper}>
         <TextInput
-          style={styles.inputWithIcon}
-          placeholder="Password"
+          style={styles.input}
+          placeholder="Email"
           placeholderTextColor="#888"
-          secureTextEntry={!showPassword}
-          value={password}
-          onChangeText={setPassword}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
         />
-        <TouchableOpacity
-          style={styles.eyeButton}
-          onPress={() => setShowPassword((v) => !v)}
-        >
-          <Ionicons
-            name={showPassword ? "eye" : "eye-off"}
-            size={20}
-            color="#555"
+
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.inputWithIcon}
+            placeholder="Password"
+            placeholderTextColor="#888"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
           />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowPassword((v) => !v)}
+          >
+            <Ionicons
+              name={showPassword ? "eye" : "eye-off"}
+              size={20}
+              color="#555"
+            />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Log In</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+          <Text style={styles.switchText}>
+            Don't have an account?{" "}
+            <Text style={styles.switchLink}>Sign up</Text>
+          </Text>
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleLogin}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Log In</Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-        <Text style={styles.switchText}>
-          Don't have an account? <Text style={styles.switchLink}>Sign up</Text>
-        </Text>
-      </TouchableOpacity>
     </LinearGradient>
   );
 }
@@ -109,9 +115,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     justifyContent: "center",
   },
+  formWrapper: {
+    marginTop: -300,
+  },
   backButton: {
     position: "absolute",
-    top: 16,
+    top: 45,
     left: 16,
     padding: 10,
   },

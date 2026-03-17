@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Canvas, Path, Skia } from "@shopify/react-native-skia";
 import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
+import { ResizeMode, Video } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -156,9 +157,13 @@ export default function Welcome() {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../assets/images/comet-bg1.jpg")}
+      <Video
+        source={require("../assets/video/2611250-uhd-3840-2160-30fps_6bgcJBFT.mp4")}
         style={styles.background}
+        resizeMode={ResizeMode.COVER}
+        shouldPlay
+        isLooping
+        isMuted
       />
 
       {/* Bottom screen gradient overlay */}
@@ -175,7 +180,7 @@ export default function Welcome() {
         ]}
       >
         <Image
-          source={require("../assets/images/CometLogo.png")}
+          source={require("../assets/images/cometlogo-1.png")}
           style={styles.logo}
         />
         <Text style={styles.cometText}>COMET</Text>

@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { supabase } from "@/lib/supabase";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -10,7 +13,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { supabase } from "@/lib/supabase";
 
 export default function SignUp() {
   const router = useRouter();
@@ -20,6 +22,8 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   async function handleSignUp() {
     if (!email || !password || !confirmPassword) {
@@ -51,7 +55,7 @@ export default function SignUp() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <LinearGradient colors={["#164271", "#000000"]} style={[styles.container, { paddingTop: insets.top }]}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
         <Text style={styles.backArrow}>←</Text>
       </TouchableOpacity>
@@ -68,23 +72,47 @@ export default function SignUp() {
         onChangeText={setEmail}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#888"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.inputWithIcon}
+          placeholder="Password"
+          placeholderTextColor="#888"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeButton}
+          onPress={() => setShowPassword((v) => !v)}
+        >
+          <Ionicons
+            name={showPassword ? "eye" : "eye-off"}
+            size={20}
+            color="#555"
+          />
+        </TouchableOpacity>
+      </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm password"
-        placeholderTextColor="#888"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.inputWithIcon}
+          placeholder="Confirm password"
+          placeholderTextColor="#888"
+          secureTextEntry={!showConfirmPassword}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeButton}
+          onPress={() => setShowConfirmPassword((v) => !v)}
+        >
+          <Ionicons
+            name={showConfirmPassword ? "eye" : "eye-off"}
+            size={20}
+            color="#555"
+          />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
@@ -103,7 +131,7 @@ export default function SignUp() {
           Already have an account? <Text style={styles.switchLink}>Log in</Text>
         </Text>
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -112,7 +140,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: "center",
-    backgroundColor: "#000",
   },
   backButton: {
     position: "absolute",
@@ -138,8 +165,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
   },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  inputWithIcon: {
+    flex: 1,
+    padding: 14,
+    color: "#fff",
+    fontSize: 16,
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
   button: {
-    backgroundColor: "#e85d4a",
+    backgroundColor: "#2A7DE1",
     borderRadius: 10,
     padding: 16,
     alignItems: "center",
@@ -159,7 +203,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   switchLink: {
-    color: "#e85d4a",
+    color: "#2A7DE1",
     fontWeight: "bold",
   },
 });

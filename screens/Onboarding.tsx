@@ -720,7 +720,7 @@ export default function Onboarding() {
   const isLocationStep = step === 4;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <LinearGradient colors={["#164271", "#000000"]} style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       {/* Progress bar */}
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${((step + 1) / TOTAL_STEPS) * 100}%` }]} />
@@ -750,7 +750,7 @@ export default function Onboarding() {
           )}
         </TouchableOpacity>
       )}
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -759,7 +759,6 @@ export default function Onboarding() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
     paddingHorizontal: 24,
   },
   progressBar: {

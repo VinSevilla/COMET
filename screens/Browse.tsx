@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 
@@ -37,22 +38,37 @@ export default function Browse() {
   const [loading, setLoading] = useState(true);
   const [signaling, setSignaling] = useState(false);
 
-  useEffect(() => {
-    if (user) fetchProfiles();
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      if (user) fetchProfiles();
+    }, [user])
+  );
 
   async function fetchProfiles() {
     setLoading(true);
 
-    // Fetch profiles excluding the current user and anyone already signaled
+    // Get IDs of people already signaled
     const { data: alreadySignaled } = await supabase
       .from("signals")
       .select("swiped_id")
       .eq("swiper_id", user!.id);
 
+    // Get IDs of people with a drifted match — they should reappear in Browse
+    const { data: driftedMatches } = await supabase
+      .from("matches")
+      .select("user1_id, user2_id")
+      .eq("status", "drifted")
+      .or(`user1_id.eq.${user!.id},user2_id.eq.${user!.id}`);
+
+    const driftedIds = (driftedMatches ?? []).map((m) =>
+      m.user1_id === user!.id ? m.user2_id : m.user1_id
+    );
+
+    // Exclude signaled people unless we've drifted with them
+    const signaled = (alreadySignaled ?? []).map((s) => s.swiped_id);
     const excludeIds = [
       user!.id,
-      ...(alreadySignaled?.map((s) => s.swiped_id) ?? []),
+      ...signaled.filter((id) => !driftedIds.includes(id)),
     ];
 
     const { data, error } = await supabase
@@ -66,6 +82,7 @@ export default function Browse() {
       Alert.alert("Error", error.message);
     } else {
       setProfiles(data ?? []);
+      setCurrentIndex(0);
     }
 
     setLoading(false);

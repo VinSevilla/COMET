@@ -44,7 +44,25 @@ export default function TabLayout() {
         }}
       />
 
-      <Tabs.Screen name="browse" options={{ title: "Browse" }} />
+      <Tabs.Screen
+        name="browse"
+        options={{
+          title: "Browse",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.2.fill" color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="collision"
+        options={{
+          title: "Orbits",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="message.fill" color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

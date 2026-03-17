@@ -235,7 +235,7 @@ export default function Welcome() {
                 style={StyleSheet.absoluteFill}
                 pointerEvents="none"
               />
-              <Text style={styles.buttonText}>SIGN UP</Text>
+              <Text style={styles.buttonText}>CREATE AN ACCOUNT</Text>
             </TouchableOpacity>
             <PillStreak width={btnDims.width} height={btnDims.height} />
           </View>

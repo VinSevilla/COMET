@@ -1,5 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "@/lib/supabase";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -55,13 +55,16 @@ export default function SignUp() {
   }
 
   return (
-    <LinearGradient colors={["#164271", "#000000"]} style={[styles.container, { paddingTop: insets.top }]}>
+    <LinearGradient
+      colors={["#164271", "#000000"]}
+      style={[styles.container, { paddingTop: insets.top }]}
+    >
       <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
         <Text style={styles.backArrow}>←</Text>
       </TouchableOpacity>
 
       <View style={styles.formWrapper}>
-        <Text style={styles.title}>Create account</Text>
+        <Text style={styles.title}>Welcome to COMET!</Text>
 
         <TextInput
           style={styles.input}
@@ -123,16 +126,35 @@ export default function SignUp() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Sign Up</Text>
+            <Text style={styles.buttonText}>Create an Account</Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
           <Text style={styles.switchText}>
-            Already have an account? <Text style={styles.switchLink}>Log in</Text>
+            Already have an account?{" "}
+            <Text style={styles.switchLink}>Log in</Text>
           </Text>
         </TouchableOpacity>
       </View>
+
+      <Text style={styles.legalText}>
+        By continuing, you agree to COMET's{" "}
+        <Text
+          style={styles.legalLink}
+          onPress={() => router.push("/(auth)/terms")}
+        >
+          Terms of Service
+        </Text>{" "}
+        and acknowledge that you have read our{" "}
+        <Text
+          style={styles.legalLink}
+          onPress={() => router.push("/(auth)/privacy")}
+        >
+          Privacy Policy
+        </Text>{" "}
+        to learn how we collect and use your data.
+      </Text>
     </LinearGradient>
   );
 }
@@ -210,5 +232,18 @@ const styles = StyleSheet.create({
   switchLink: {
     color: "#2A7DE1",
     fontWeight: "bold",
+  },
+  legalText: {
+    position: "absolute",
+    bottom: 32,
+    left: 24,
+    right: 24,
+    color: "#555",
+    textAlign: "center",
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  legalLink: {
+    color: "#2A7DE1",
   },
 });

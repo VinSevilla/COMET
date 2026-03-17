@@ -101,9 +101,21 @@ export default function Login() {
         <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
           <Text style={styles.switchText}>
             Don't have an account?{" "}
-            <Text style={styles.switchLink}>Sign up</Text>
+            <Text style={styles.switchLink}>Create an Account</Text>
           </Text>
         </TouchableOpacity>
+
+        <Text style={styles.legalText}>
+          By continuing you agree to COMET's{" "}
+          <Text style={styles.legalLink} onPress={() => router.push("/(auth)/terms")}>
+            Terms of Service
+          </Text>{" "}
+          and acknowledge that you have read our{" "}
+          <Text style={styles.legalLink} onPress={() => router.push("/(auth)/privacy")}>
+            Privacy Policy
+          </Text>{" "}
+          to learn how we collect and use your data.
+        </Text>
       </View>
     </LinearGradient>
   );
@@ -182,5 +194,15 @@ const styles = StyleSheet.create({
   switchLink: {
     color: "#2A7DE1",
     fontWeight: "bold",
+  },
+  legalText: {
+    color: "#555",
+    textAlign: "center",
+    fontSize: 12,
+    marginTop: 24,
+    lineHeight: 18,
+  },
+  legalLink: {
+    color: "#2A7DE1",
   },
 });

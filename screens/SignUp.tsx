@@ -130,7 +130,7 @@ export default function SignUp() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+        <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
           <Text style={styles.switchText}>
             Already have an account?{" "}
             <Text style={styles.switchLink}>Log in</Text>

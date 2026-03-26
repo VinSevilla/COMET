@@ -53,7 +53,7 @@ export default function Login() {
       </TouchableOpacity>
 
       <View style={styles.formWrapper}>
-        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.title}>Welcome back!</Text>
 
         <TextInput
           style={styles.input}
@@ -98,25 +98,31 @@ export default function Login() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+        <TouchableOpacity onPress={() => router.replace("/(auth)/signup")}>
           <Text style={styles.switchText}>
             Don't have an account?{" "}
             <Text style={styles.switchLink}>Create an Account</Text>
           </Text>
         </TouchableOpacity>
-
-        <Text style={styles.legalText}>
-          By continuing you agree to COMET's{" "}
-          <Text style={styles.legalLink} onPress={() => router.push("/(auth)/terms")}>
-            Terms of Service
-          </Text>{" "}
-          and acknowledge that you have read our{" "}
-          <Text style={styles.legalLink} onPress={() => router.push("/(auth)/privacy")}>
-            Privacy Policy
-          </Text>{" "}
-          to learn how we collect and use your data.
-        </Text>
       </View>
+
+      <Text style={styles.legalText}>
+        By continuing you agree to COMET's{" "}
+        <Text
+          style={styles.legalLink}
+          onPress={() => router.push("/(auth)/terms")}
+        >
+          Terms of Service
+        </Text>{" "}
+        and acknowledge that you have read our{" "}
+        <Text
+          style={styles.legalLink}
+          onPress={() => router.push("/(auth)/privacy")}
+        >
+          Privacy Policy
+        </Text>{" "}
+        to learn how we collect and use your data.
+      </Text>
     </LinearGradient>
   );
 }
@@ -196,11 +202,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   legalText: {
+    position: "absolute",
+    bottom: 32,
+    left: 24,
+    right: 24,
     color: "#555",
     textAlign: "center",
-    fontSize: 12,
-    marginTop: 24,
-    lineHeight: 18,
+    fontSize: 10,
+    lineHeight: 14,
   },
   legalLink: {
     color: "#2A7DE1",

@@ -123,6 +123,14 @@ export default function SignUp() {
           onPress={handleSignUp}
           disabled={loading}
         >
+          <LinearGradient
+            colors={["rgba(0,0,0,0.40)", "rgba(0,0,0,0)", "rgba(0,0,0,0.40)"]}
+            locations={[0, 0.5, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
@@ -211,10 +219,11 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "#2A7DE1",
-    borderRadius: 10,
-    padding: 16,
+    borderRadius: 30,
+    paddingVertical: 16,
     alignItems: "center",
     marginBottom: 20,
+    overflow: "hidden",
   },
   buttonDisabled: {
     opacity: 0.6,

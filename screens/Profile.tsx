@@ -44,6 +44,12 @@ export default function Profile() {
     return (
       <LinearGradient colors={["#164271", "#000000"]} style={styles.centered}>
         <Text style={styles.errorText}>Could not load profile.</Text>
+        <TouchableOpacity
+          style={[styles.signOutButton, { marginTop: 24, paddingHorizontal: 32 }]}
+          onPress={() => supabase.auth.signOut()}
+        >
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </TouchableOpacity>
       </LinearGradient>
     );
   }

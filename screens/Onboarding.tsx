@@ -1,5 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { Slider } from "@miblanchard/react-native-slider";
+import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
@@ -8,7 +10,9 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Image,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -317,6 +321,7 @@ type OnboardingData = {
   birthday: string;
   gender: string;
   lookingFor: string;
+  ageRange: [number, number];
   photos: string[];
   prompts: PromptEntry[];
   interests: string[];
@@ -325,7 +330,7 @@ type OnboardingData = {
   locationLng: number | null;
 };
 
-const TOTAL_STEPS = 10;
+const TOTAL_STEPS = 11;
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -338,7 +343,27 @@ export default function Onboarding() {
   const [saving, setSaving] = useState(false);
   const [suggestedPrompts] = useState<string[]>(getSuggestedPrompts());
   const [showAllPrompts, setShowAllPrompts] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
   const [activePrompt, setActivePrompt] = useState<string | null>(null);
+
+  // When user returns from Settings after enabling location, auto-advance
+  useEffect(() => {
+    if (!locationDenied) return;
+    const sub = AppState.addEventListener("change", async (state) => {
+      if (state === "active") {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status === "granted") {
+          const location = await Location.getCurrentPositionAsync({});
+          update({
+            locationLat: location.coords.latitude,
+            locationLng: location.coords.longitude,
+          });
+          nextStep();
+        }
+      }
+    });
+    return () => sub.remove();
+  }, [locationDenied]);
   const [promptAnswer, setPromptAnswer] = useState("");
 
   const [data, setData] = useState<OnboardingData>({
@@ -346,6 +371,7 @@ export default function Onboarding() {
     birthday: "",
     gender: "",
     lookingFor: "",
+    ageRange: [18, 35],
     photos: [],
     prompts: [],
     interests: [],
@@ -395,9 +421,10 @@ export default function Onboarding() {
   // ─── Location ─────────────────────────────────────────────────────────────
 
   async function requestLocation() {
+    setLocationDenied(false);
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      nextStep();
+      setLocationDenied(true);
       return;
     }
     const location = await Location.getCurrentPositionAsync({});
@@ -477,6 +504,8 @@ export default function Onboarding() {
       interests: data.interests,
       prompts: data.prompts,
       dating_intent: data.datingIntent,
+      preferred_age_min: data.ageRange[0],
+      preferred_age_max: data.ageRange[1],
       location_lat: data.locationLat,
       location_lng: data.locationLng,
       // Photos upload to Supabase Storage is a future step.
@@ -506,16 +535,18 @@ export default function Onboarding() {
       case 3:
         return data.lookingFor !== "";
       case 4:
-        return true; // location — always can skip
+        return true; // age range — always valid
       case 5:
-        return data.photos.length > 0;
+        return true; // location — always can skip
       case 6:
-        return data.prompts.length >= 2;
+        return data.photos.length > 0;
       case 7:
-        return data.interests.length > 0;
+        return data.prompts.length >= 2;
       case 8:
-        return data.datingIntent !== "";
+        return data.interests.length > 0;
       case 9:
+        return data.datingIntent !== "";
+      case 10:
         return true;
       default:
         return true;
@@ -565,25 +596,29 @@ export default function Onboarding() {
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>How do you identify?</Text>
-            {["Man", "Woman", "Non-binary", "Prefer not to say"].map((g) => (
-              <TouchableOpacity
-                key={g}
-                style={[
-                  styles.optionButton,
-                  data.gender === g && styles.optionSelected,
-                ]}
-                onPress={() => update({ gender: g })}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    data.gender === g && styles.optionTextSelected,
-                  ]}
-                >
-                  {g}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.optionGroup}>
+              {["Male", "Female", "Non-binary", "Prefer not to say"].map(
+                (g) => (
+                  <TouchableOpacity
+                    key={g}
+                    style={[
+                      styles.optionButton,
+                      data.gender === g && styles.optionSelected,
+                    ]}
+                    onPress={() => update({ gender: g })}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        data.gender === g && styles.optionTextSelected,
+                      ]}
+                    >
+                      {g}
+                    </Text>
+                  </TouchableOpacity>
+                ),
+              )}
+            </View>
           </View>
         );
 
@@ -591,51 +626,111 @@ export default function Onboarding() {
       case 3:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Who do you want to see?</Text>
-            {["Men", "Women", "Everyone"].map((g) => (
-              <TouchableOpacity
-                key={g}
-                style={[
-                  styles.optionButton,
-                  data.lookingFor === g && styles.optionSelected,
-                ]}
-                onPress={() => update({ lookingFor: g })}
-              >
-                <Text
+            <Text style={styles.stepTitle}>
+              Who do you {"\n"}prefer to see?
+            </Text>
+            <View style={styles.optionGroup}>
+              {["Men", "Women", "Everyone"].map((g) => (
+                <TouchableOpacity
+                  key={g}
                   style={[
-                    styles.optionText,
-                    data.lookingFor === g && styles.optionTextSelected,
+                    styles.optionButton,
+                    data.lookingFor === g && styles.optionSelected,
                   ]}
+                  onPress={() => update({ lookingFor: g })}
                 >
-                  {g}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.optionText,
+                      data.lookingFor === g && styles.optionTextSelected,
+                    ]}
+                  >
+                    {g}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         );
 
-      // Step 4 — Location
+      // Step 4 — Age range
       case 4:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Enable location?</Text>
-            <Text style={styles.stepSubtitle}>
-              We use your location to show you people nearby. You can skip this.
+            <Text style={styles.stepTitle}>
+              What is your{"\n"}preferred age range?
             </Text>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={requestLocation}
-            >
-              <Text style={styles.primaryButtonText}>Allow Location</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.skipButton} onPress={nextStep}>
-              <Text style={styles.skipText}>Skip for now</Text>
-            </TouchableOpacity>
+            <Text style={styles.stepSubtitle}>
+              We'll show you people within this range.
+            </Text>
+            <Text style={styles.ageRangeLabel}>
+              {data.ageRange[0]} — {data.ageRange[1]}
+            </Text>
+            <Slider
+              value={data.ageRange}
+              onValueChange={(v: number[]) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                update({ ageRange: [Math.round(v[0]), Math.round(v[1])] });
+              }}
+              minimumValue={18}
+              maximumValue={80}
+              step={1}
+              containerStyle={styles.sliderContainer}
+              trackStyle={styles.sliderTrack}
+              minimumTrackTintColor="#FFB347"
+              maximumTrackTintColor="#4B5563"
+              thumbStyle={styles.sliderThumb}
+            />
+            <View style={styles.sliderBounds}>
+              <Text style={styles.sliderBoundText}>18</Text>
+              <Text style={styles.sliderBoundText}>80</Text>
+            </View>
           </View>
         );
 
-      // Step 5 — Photos
+      // Step 5 — Location
       case 5:
+        return (
+          <View style={styles.stepContainer}>
+            {locationDenied ? (
+              <>
+                <Text style={styles.stepTitle}>Location required</Text>
+                <Text style={styles.stepSubtitle}>
+                  Location is required to discover matches nearby.{"\n"}Please
+                  enable location to continue.
+                </Text>
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={() => Linking.openSettings()}
+                >
+                  <Text style={styles.primaryButtonText}>Open Settings</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.skipButton}
+                  onPress={requestLocation}
+                >
+                  <Text style={styles.skipText}>Try Again</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={styles.stepTitle}>Enable location?</Text>
+                <Text style={styles.stepSubtitle}>
+                  We use your location to show you people nearby.
+                </Text>
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={requestLocation}
+                >
+                  <Text style={styles.primaryButtonText}>Allow Location</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        );
+
+      // Step 6 — Photos
+      case 6:
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Add your photos</Text>
@@ -666,8 +761,8 @@ export default function Onboarding() {
           </View>
         );
 
-      // Step 6 — Prompts
-      case 6:
+      // Step 7 — Prompts
+      case 7:
         return (
           <ScrollView
             style={styles.scrollStep}
@@ -745,8 +840,8 @@ export default function Onboarding() {
           </ScrollView>
         );
 
-      // Step 7 — Interests
-      case 7:
+      // Step 8 — Interests
+      case 8:
         return (
           <ScrollView
             style={styles.scrollStep}
@@ -783,8 +878,8 @@ export default function Onboarding() {
           </ScrollView>
         );
 
-      // Step 8 — Dating intent
-      case 8:
+      // Step 9 — Dating intent
+      case 9:
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>What are you hoping to find?</Text>
@@ -815,8 +910,8 @@ export default function Onboarding() {
           </View>
         );
 
-      // Step 9 — Orbit explanation
-      case 9:
+      // Step 10 — Orbit explanation
+      case 10:
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Welcome to COMET.</Text>
@@ -847,7 +942,7 @@ export default function Onboarding() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   const isLastStep = step === TOTAL_STEPS - 1;
-  const isLocationStep = step === 4;
+  const isLocationStep = step === 5;
 
   return (
     <LinearGradient
@@ -868,11 +963,12 @@ export default function Onboarding() {
       </View>
 
       {/* Back button */}
-      {step > 0 && (
-        <TouchableOpacity onPress={prevStep} style={styles.backButton}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        onPress={step === 0 ? () => router.replace("/(auth)/signup") : prevStep}
+        style={styles.backButton}
+      >
+        <Text style={styles.backArrow}>←</Text>
+      </TouchableOpacity>
 
       {/* Step content */}
       <View style={styles.content}>{renderStep()}</View>
@@ -887,6 +983,14 @@ export default function Onboarding() {
           onPress={isLastStep ? saveProfile : nextStep}
           disabled={!canAdvance() || saving}
         >
+          <LinearGradient
+            colors={["rgba(0,0,0,0.40)", "rgba(0,0,0,0)", "rgba(0,0,0,0.40)"]}
+            locations={[0, 0.5, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
           {saving ? (
             <ActivityIndicator color="#fff" />
           ) : (
@@ -921,6 +1025,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginBottom: 16,
+    alignSelf: "flex-start",
+    padding: 8,
   },
   backArrow: {
     fontSize: 24,
@@ -956,6 +1062,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Montserrat-Regular",
     marginBottom: 16,
+  },
+  ageRangeLabel: {
+    fontSize: 24,
+    fontFamily: "Montserrat-Bold",
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 24,
+    marginTop: 8,
+  },
+  sliderContainer: {
+    marginHorizontal: 4,
+  },
+  sliderTrack: {
+    height: 4,
+    borderRadius: 2,
+  },
+  sliderThumb: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  sliderBounds: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  sliderBoundText: {
+    color: "#fff",
+    fontSize: 13,
+    fontFamily: "Montserrat-Regular",
+  },
+  optionGroup: {
+    marginTop: 24,
   },
   optionButton: {
     backgroundColor: "#1a1a1a",
@@ -1166,10 +1311,11 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     backgroundColor: "#2A7DE1",
-    borderRadius: 10,
-    padding: 16,
+    borderRadius: 30,
+    paddingVertical: 16,
     alignItems: "center",
     marginTop: 16,
+    overflow: "hidden",
   },
   nextButtonDisabled: {
     opacity: 0.3,
@@ -1177,6 +1323,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: "#fff",
     fontSize: 16,
-    fontFamily: "Montserrat-Bold",
+    fontFamily: "Montserrat-Regular",
   },
 });

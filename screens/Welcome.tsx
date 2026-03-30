@@ -265,7 +265,7 @@ export default function Welcome() {
         <Ionicons
           name={musicOn ? "volume-high" : "volume-mute"}
           size={22}
-          color={musicOn ? "#FFB347" : "rgba(255,255,255,0.4)"}
+          color={musicOn ? "#2A7DE1" : "rgba(255,255,255,0.4)"}
         />
       </TouchableOpacity>
     </View>

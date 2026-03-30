@@ -87,6 +87,13 @@ export default function Login() {
         </View>
 
         <TouchableOpacity
+          style={styles.forgotPasswordButton}
+          onPress={() => router.push("/(auth)/forgot-password")}
+        >
+          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleLogin}
           disabled={loading}
@@ -107,7 +114,7 @@ export default function Login() {
       </View>
 
       <Text style={styles.legalText}>
-        By continuing you agree to COMET's{" "}
+        By continuing, you agree to COMET's{" "}
         <Text
           style={styles.legalLink}
           onPress={() => router.push("/(auth)/terms")}
@@ -200,6 +207,16 @@ const styles = StyleSheet.create({
   switchLink: {
     color: "#2A7DE1",
     fontWeight: "bold",
+  },
+  forgotPasswordButton: {
+    alignSelf: "flex-end",
+    marginBottom: 20,
+    marginTop: -8,
+  },
+  forgotPasswordText: {
+    color: "#2A7DE1",
+    fontSize: 14,
+    fontWeight: "500",
   },
   legalText: {
     position: "absolute",

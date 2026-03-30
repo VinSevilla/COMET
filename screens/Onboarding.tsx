@@ -125,7 +125,8 @@ const INTEREST_CATEGORIES = [
 // ─── Birthday Drum Picker ─────────────────────────────────────────────────────
 
 const ITEM_HEIGHT = 52;
-const PICKER_HEIGHT = ITEM_HEIGHT * 5;
+const PICKER_HEIGHT = ITEM_HEIGHT * 3;
+const PICKER_PADDING = (PICKER_HEIGHT - ITEM_HEIGHT) / 2;
 
 const MONTHS = [
   "Jan",
@@ -172,7 +173,7 @@ function PickerColumn({
         decelerationRate="fast"
         onMomentumScrollEnd={onScrollEnd}
         onScrollEndDrag={onScrollEnd}
-        contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
+        contentContainerStyle={{ paddingVertical: PICKER_PADDING }}
         style={{ height: PICKER_HEIGHT }}
       >
         {items.map((item, i) => (
@@ -204,7 +205,7 @@ function PickerColumn({
           top: 0,
           left: 0,
           right: 0,
-          height: ITEM_HEIGHT * 2,
+          height: PICKER_PADDING,
         }}
         pointerEvents="none"
       />
@@ -215,7 +216,7 @@ function PickerColumn({
           bottom: 0,
           left: 0,
           right: 0,
-          height: ITEM_HEIGHT * 2,
+          height: PICKER_PADDING,
         }}
         pointerEvents="none"
       />
@@ -277,7 +278,7 @@ function BirthdayPicker({
         pointerEvents="none"
         style={{
           position: "absolute",
-          top: ITEM_HEIGHT * 2,
+          top: PICKER_PADDING,
           left: 0,
           right: 0,
           height: ITEM_HEIGHT,
@@ -394,7 +395,32 @@ export default function Onboarding() {
 
   // ─── Photo Picker ──────────────────────────────────────────────────────────
 
-  async function pickPhoto() {
+  async function takeLivePhoto() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Allow camera access to take a photo.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: "images",
+      allowsEditing: true,
+      aspect: [3, 4],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const next = [...data.photos];
+      if (next.length === 0) {
+        next.push(result.assets[0].uri);
+      } else if (next.length < 5) {
+        next.push(result.assets[0].uri);
+      } else {
+        next[0] = result.assets[0].uri;
+      }
+      update({ photos: next });
+    }
+  }
+
+  async function pickPhoto(slotIndex: number) {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
@@ -410,7 +436,9 @@ export default function Onboarding() {
       quality: 0.8,
     });
     if (!result.canceled) {
-      update({ photos: [...data.photos, result.assets[0].uri] });
+      const next = [...data.photos];
+      next[slotIndex] = result.assets[0].uri;
+      update({ photos: next });
     }
   }
 
@@ -580,7 +608,7 @@ export default function Onboarding() {
       case 1:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>When's your birthday?</Text>
+            <Text style={styles.stepTitle}>When were you born?</Text>
             <Text style={styles.stepSubtitle}>
               Your age will be shown on your profile.
             </Text>
@@ -588,6 +616,21 @@ export default function Onboarding() {
               value={data.birthday}
               onChange={(v) => update({ birthday: v })}
             />
+            {data.birthday
+              ? (() => {
+                  const birth = new Date(data.birthday);
+                  const today = new Date();
+                  let age = today.getFullYear() - birth.getFullYear();
+                  const m = today.getMonth() - birth.getMonth();
+                  if (m < 0 || (m === 0 && today.getDate() < birth.getDate()))
+                    age--;
+                  return (
+                    <Text style={styles.agePreview}>
+                      You are {age} years old
+                    </Text>
+                  );
+                })()
+              : null}
           </View>
         );
 
@@ -735,29 +778,79 @@ export default function Onboarding() {
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Add your photos</Text>
             <Text style={styles.stepSubtitle}>
-              Add at least 1 photo. Up to 6.
+              Add at least 1 photo. Up to 5.
             </Text>
-            <View style={styles.photoGrid}>
-              {data.photos.map((uri, i) => (
-                <View key={i} style={styles.photoSlot}>
-                  <Image source={{ uri }} style={styles.photo} />
+
+            {/* Main photo slot */}
+            <TouchableOpacity
+              style={styles.photoMainSlot}
+              onPress={() => pickPhoto(0)}
+              activeOpacity={0.8}
+            >
+              {data.photos[0] ? (
+                <>
+                  <Image
+                    source={{ uri: data.photos[0] }}
+                    style={styles.photoMainImage}
+                  />
                   <TouchableOpacity
                     style={styles.removePhoto}
-                    onPress={() => removePhoto(i)}
+                    onPress={() => removePhoto(0)}
                   >
                     <Text style={styles.removePhotoText}>✕</Text>
                   </TouchableOpacity>
-                </View>
-              ))}
-              {data.photos.length < 6 && (
-                <TouchableOpacity
-                  style={styles.addPhotoSlot}
-                  onPress={pickPhoto}
-                >
-                  <Text style={styles.addPhotoText}>+</Text>
-                </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.addPhotoPlus}>+</Text>
+                  <Text style={styles.addPhotoLabel}>
+                    This is your first impression
+                  </Text>
+                </>
               )}
+            </TouchableOpacity>
+
+            {/* 3 secondary slots */}
+            <View style={styles.photoRow}>
+              {[1, 2, 3, 4].map((slot) => (
+                <TouchableOpacity
+                  key={slot}
+                  style={styles.photoSecondarySlot}
+                  onPress={() => pickPhoto(slot)}
+                  activeOpacity={0.8}
+                >
+                  {data.photos[slot] ? (
+                    <>
+                      <Image
+                        source={{ uri: data.photos[slot] }}
+                        style={styles.photoSecondaryImage}
+                      />
+                      <TouchableOpacity
+                        style={styles.removePhoto}
+                        onPress={() => removePhoto(slot)}
+                      >
+                        <Text style={styles.removePhotoText}>✕</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.addPhotoPlus}>+</Text>
+                      <Text style={styles.addPhotoLabel}>Add photo</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              ))}
             </View>
+
+            {/* Take live photo */}
+            <TouchableOpacity
+              style={styles.livePhotoButton}
+              onPress={takeLivePhoto}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.livePhotoText}>Take live photo</Text>
+            </TouchableOpacity>
+            <Text style={styles.livePhotoSubtext}>Get a verified badge</Text>
           </View>
         );
 
@@ -1063,6 +1156,13 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Regular",
     marginBottom: 16,
   },
+  agePreview: {
+    color: "#888",
+    fontSize: 15,
+    fontFamily: "Montserrat-Regular",
+    textAlign: "center",
+    marginTop: 16,
+  },
   ageRangeLabel: {
     fontSize: 24,
     fontFamily: "Montserrat-Bold",
@@ -1144,27 +1244,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Montserrat-Regular",
   },
-  photoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 8,
-  },
-  photoSlot: {
-    width: 100,
-    height: 133,
-    borderRadius: 10,
+  photoMainSlot: {
+    width: "100%",
+    height: 180,
+    borderRadius: 16,
     overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    marginBottom: 8,
     position: "relative",
   },
-  photo: {
+  photoMainImage: {
     width: "100%",
     height: "100%",
   },
+  photoRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 12,
+  },
+  photoSecondarySlot: {
+    width: "48%",
+    height: 88,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  photoSecondaryImage: {
+    width: "100%",
+    height: "100%",
+  },
+  addPhotoPlus: {
+    color: "#555",
+    fontSize: 24,
+    fontFamily: "Montserrat-Regular",
+    lineHeight: 28,
+  },
+  addPhotoLabel: {
+    color: "#555",
+    fontSize: 11,
+    fontFamily: "Montserrat-Regular",
+    marginTop: 2,
+  },
   removePhoto: {
     position: "absolute",
-    top: 4,
-    right: 4,
+    top: 6,
+    right: 6,
     backgroundColor: "rgba(0,0,0,0.6)",
     borderRadius: 12,
     width: 24,
@@ -1177,21 +1314,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Montserrat-Regular",
   },
-  addPhotoSlot: {
-    width: 100,
-    height: 133,
-    borderRadius: 10,
-    backgroundColor: "#1a1a1a",
-    alignItems: "center",
-    justifyContent: "center",
+  livePhotoButton: {
+    alignSelf: "center",
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 30,
     borderWidth: 1,
-    borderColor: "#333",
-    borderStyle: "dashed",
+    borderColor: "#2A7DE1",
   },
-  addPhotoText: {
-    color: "#555",
-    fontSize: 32,
+  livePhotoText: {
+    color: "#2A7DE1",
+    fontSize: 13,
+    fontFamily: "Montserrat-Bold",
+    letterSpacing: 0.5,
+  },
+  livePhotoSubtext: {
+    color: "#6A8FAF",
+    fontSize: 12,
     fontFamily: "Montserrat-Regular",
+    fontStyle: "italic",
+    textAlign: "center",
+    marginTop: 6,
   },
   sectionLabel: {
     color: "#555",

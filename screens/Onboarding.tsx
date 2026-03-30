@@ -13,6 +13,7 @@ import {
   AppState,
   Image,
   Linking,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -342,6 +343,7 @@ export default function Onboarding() {
 
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [suggestedPrompts] = useState<string[]>(getSuggestedPrompts());
   const [showAllPrompts, setShowAllPrompts] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
@@ -387,6 +389,14 @@ export default function Onboarding() {
 
   function nextStep() {
     setStep((s) => s + 1);
+  }
+
+  function handleContinue() {
+    if (step === 6 && !data.photos[0] && data.photos.some(Boolean)) {
+      setShowPromoteModal(true);
+      return;
+    }
+    nextStep();
   }
 
   function prevStep() {
@@ -444,6 +454,16 @@ export default function Onboarding() {
 
   function removePhoto(index: number) {
     update({ photos: data.photos.filter((_, i) => i !== index) });
+  }
+
+  function promoteToMain(slotIndex: number) {
+    const next = [...data.photos];
+    const chosen = next[slotIndex];
+    next[slotIndex] = next[0] ?? "";
+    next[0] = chosen;
+    // clean up any empty strings left behind
+    update({ photos: next.filter(Boolean) });
+    setShowPromoteModal(false);
   }
 
   // ─── Location ─────────────────────────────────────────────────────────────
@@ -567,7 +587,7 @@ export default function Onboarding() {
       case 5:
         return true; // location — always can skip
       case 6:
-        return data.photos.length > 0;
+        return data.photos.some(Boolean);
       case 7:
         return data.prompts.length >= 2;
       case 8:
@@ -809,6 +829,47 @@ export default function Onboarding() {
                 </>
               )}
             </TouchableOpacity>
+
+            {/* Promote modal */}
+            <Modal
+              visible={showPromoteModal}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowPromoteModal(false)}
+            >
+              <TouchableOpacity
+                style={styles.modalBackdrop}
+                activeOpacity={1}
+                onPress={() => setShowPromoteModal(false)}
+              >
+                <View style={styles.promoteModal}>
+                  <TouchableOpacity
+                    style={styles.promoteModalClose}
+                    onPress={() => setShowPromoteModal(false)}
+                  >
+                    <Text style={styles.promoteModalCloseText}>✕</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.promoteModalTitle}>
+                    Choose your main photo
+                  </Text>
+                  <View style={styles.promoteGrid}>
+                    {[1, 2, 3, 4].filter((i) => data.photos[i]).map((i) => (
+                      <TouchableOpacity
+                        key={i}
+                        onPress={() => promoteToMain(i)}
+                        activeOpacity={0.8}
+                        style={styles.promoteThumb}
+                      >
+                        <Image
+                          source={{ uri: data.photos[i] }}
+                          style={styles.promoteThumbImage}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </Modal>
 
             {/* 3 secondary slots */}
             <View style={styles.photoRow}>
@@ -1073,7 +1134,7 @@ export default function Onboarding() {
             styles.nextButton,
             !canAdvance() && styles.nextButtonDisabled,
           ]}
-          onPress={isLastStep ? saveProfile : nextStep}
+          onPress={isLastStep ? saveProfile : handleContinue}
           disabled={!canAdvance() || saving}
         >
           <LinearGradient
@@ -1287,13 +1348,13 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   addPhotoPlus: {
-    color: "#555",
+    color: "#fff",
     fontSize: 24,
     fontFamily: "Montserrat-Regular",
     lineHeight: 28,
   },
   addPhotoLabel: {
-    color: "#555",
+    color: "#fff",
     fontSize: 11,
     fontFamily: "Montserrat-Regular",
     marginTop: 2,
@@ -1336,6 +1397,75 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     textAlign: "center",
     marginTop: 6,
+  },
+  promoteBanner: {
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "rgba(42,125,225,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(42,125,225,0.3)",
+    alignItems: "center",
+  },
+  promoteBannerText: {
+    color: "#2A7DE1",
+    fontSize: 13,
+    fontFamily: "Montserrat-Regular",
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  promoteModalClose: {
+    position: "absolute",
+    top: 14,
+    left: 14,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  promoteModalCloseText: {
+    color: "#6A8FAF",
+    fontSize: 13,
+    fontFamily: "Montserrat-Regular",
+  },
+  promoteModal: {
+    backgroundColor: "#0d1f33",
+    borderRadius: 20,
+    padding: 24,
+    width: "85%",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  promoteModalTitle: {
+    color: "#EAF6FF",
+    fontSize: 16,
+    fontFamily: "Montserrat-Bold",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  promoteGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    justifyContent: "center",
+  },
+  promoteThumb: {
+    width: "45%",
+    aspectRatio: 3 / 4,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  promoteThumbImage: {
+    width: "100%",
+    height: "100%",
   },
   sectionLabel: {
     color: "#555",

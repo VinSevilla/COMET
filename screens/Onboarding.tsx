@@ -1,3 +1,9 @@
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Location from "expo-location";
+import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,13 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as ImagePicker from "expo-image-picker";
-import * as Location from "expo-location";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/context/AuthContext";
 
 // ─── Prompt Data ────────────────────────────────────────────────────────────
 
@@ -123,8 +123,23 @@ const INTEREST_CATEGORIES = [
 const ITEM_HEIGHT = 52;
 const PICKER_HEIGHT = ITEM_HEIGHT * 5;
 
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const DAYS = Array.from({ length: 31 }, (_, i) =>
+  String(i + 1).padStart(2, "0"),
+);
 const _CUR_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 83 }, (_, i) => String(_CUR_YEAR - 18 - i));
 
@@ -159,13 +174,18 @@ function PickerColumn({
         {items.map((item, i) => (
           <View
             key={item}
-            style={{ height: ITEM_HEIGHT, justifyContent: "center", alignItems: "center" }}
+            style={{
+              height: ITEM_HEIGHT,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
           >
             <Text
               style={{
                 color: i === selectedIdx ? "#EAF6FF" : "rgba(234,246,255,0.28)",
                 fontSize: i === selectedIdx ? 20 : 16,
-                fontFamily: i === selectedIdx ? "Montserrat-Bold" : "Montserrat-Regular",
+                fontFamily:
+                  i === selectedIdx ? "Montserrat-Bold" : "Montserrat-Regular",
               }}
             >
               {item}
@@ -175,12 +195,24 @@ function PickerColumn({
       </ScrollView>
       <LinearGradient
         colors={["#000000", "transparent"]}
-        style={{ position: "absolute", top: 0, left: 0, right: 0, height: ITEM_HEIGHT * 2 }}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: ITEM_HEIGHT * 2,
+        }}
         pointerEvents="none"
       />
       <LinearGradient
         colors={["transparent", "#000000"]}
-        style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: ITEM_HEIGHT * 2 }}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: ITEM_HEIGHT * 2,
+        }}
         pointerEvents="none"
       />
     </View>
@@ -198,10 +230,10 @@ function BirthdayPicker({
   const defaultYearIdx = Math.max(0, YEARS.indexOf(String(_CUR_YEAR - 26)));
 
   const [monthIdx, setMonthIdx] = useState(() =>
-    parts[1] ? Math.max(0, parseInt(parts[1], 10) - 1) : 0
+    parts[1] ? Math.max(0, parseInt(parts[1], 10) - 1) : 0,
   );
   const [dayIdx, setDayIdx] = useState(() =>
-    parts[2] ? Math.max(0, parseInt(parts[2], 10) - 1) : 0
+    parts[2] ? Math.max(0, parseInt(parts[2], 10) - 1) : 0,
   );
   const [yearIdx, setYearIdx] = useState(() => {
     if (!parts[0]) return defaultYearIdx;
@@ -215,7 +247,7 @@ function BirthdayPicker({
 
   useEffect(() => {
     onChange(
-      `${YEARS[yearIdx]}-${String(monthIdx + 1).padStart(2, "0")}-${DAYS[dayIdx]}`
+      `${YEARS[yearIdx]}-${String(monthIdx + 1).padStart(2, "0")}-${DAYS[dayIdx]}`,
     );
   }, [monthIdx, dayIdx, yearIdx]);
 
@@ -253,9 +285,24 @@ function BirthdayPicker({
         }}
       />
       <View style={{ flexDirection: "row" }}>
-        <PickerColumn items={MONTHS} selectedIdx={monthIdx} scrollRef={monthRef} setter={setMonthIdx} />
-        <PickerColumn items={DAYS} selectedIdx={dayIdx} scrollRef={dayRef} setter={setDayIdx} />
-        <PickerColumn items={YEARS} selectedIdx={yearIdx} scrollRef={yearRef} setter={setYearIdx} />
+        <PickerColumn
+          items={MONTHS}
+          selectedIdx={monthIdx}
+          scrollRef={monthRef}
+          setter={setMonthIdx}
+        />
+        <PickerColumn
+          items={DAYS}
+          selectedIdx={dayIdx}
+          scrollRef={dayRef}
+          setter={setDayIdx}
+        />
+        <PickerColumn
+          items={YEARS}
+          selectedIdx={yearIdx}
+          scrollRef={yearRef}
+          setter={setYearIdx}
+        />
       </View>
     </View>
   );
@@ -324,7 +371,10 @@ export default function Onboarding() {
   async function pickPhoto() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permission needed", "Allow access to your photos to add profile pictures.");
+      Alert.alert(
+        "Permission needed",
+        "Allow access to your photos to add profile pictures.",
+      );
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -372,7 +422,12 @@ export default function Onboarding() {
 
   function savePromptAnswer() {
     if (!activePrompt || !promptAnswer.trim()) return;
-    update({ prompts: [...data.prompts, { prompt: activePrompt, answer: promptAnswer.trim() }] });
+    update({
+      prompts: [
+        ...data.prompts,
+        { prompt: activePrompt, answer: promptAnswer.trim() },
+      ],
+    });
     setActivePrompt(null);
     setPromptAnswer("");
   }
@@ -406,7 +461,11 @@ export default function Onboarding() {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    )
+      age--;
 
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
@@ -438,17 +497,28 @@ export default function Onboarding() {
 
   function canAdvance(): boolean {
     switch (step) {
-      case 0: return data.name.trim().length > 0;
-      case 1: return data.birthday.trim().length > 0;
-      case 2: return data.gender !== "";
-      case 3: return data.lookingFor !== "";
-      case 4: return true; // location — always can skip
-      case 5: return data.photos.length > 0;
-      case 6: return data.prompts.length >= 2;
-      case 7: return data.interests.length > 0;
-      case 8: return data.datingIntent !== "";
-      case 9: return true;
-      default: return true;
+      case 0:
+        return data.name.trim().length > 0;
+      case 1:
+        return data.birthday.trim().length > 0;
+      case 2:
+        return data.gender !== "";
+      case 3:
+        return data.lookingFor !== "";
+      case 4:
+        return true; // location — always can skip
+      case 5:
+        return data.photos.length > 0;
+      case 6:
+        return data.prompts.length >= 2;
+      case 7:
+        return data.interests.length > 0;
+      case 8:
+        return data.datingIntent !== "";
+      case 9:
+        return true;
+      default:
+        return true;
     }
   }
 
@@ -461,7 +531,9 @@ export default function Onboarding() {
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>What's your name?</Text>
-            <Text style={styles.stepSubtitle}>This is how you'll appear to others.</Text>
+            <Text style={styles.stepSubtitle}>
+              This is how you'll appear to others.
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="First name"
@@ -478,7 +550,9 @@ export default function Onboarding() {
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>When's your birthday?</Text>
-            <Text style={styles.stepSubtitle}>Your age will be shown on your profile.</Text>
+            <Text style={styles.stepSubtitle}>
+              Your age will be shown on your profile.
+            </Text>
             <BirthdayPicker
               value={data.birthday}
               onChange={(v) => update({ birthday: v })}
@@ -494,10 +568,18 @@ export default function Onboarding() {
             {["Man", "Woman", "Non-binary", "Prefer not to say"].map((g) => (
               <TouchableOpacity
                 key={g}
-                style={[styles.optionButton, data.gender === g && styles.optionSelected]}
+                style={[
+                  styles.optionButton,
+                  data.gender === g && styles.optionSelected,
+                ]}
                 onPress={() => update({ gender: g })}
               >
-                <Text style={[styles.optionText, data.gender === g && styles.optionTextSelected]}>
+                <Text
+                  style={[
+                    styles.optionText,
+                    data.gender === g && styles.optionTextSelected,
+                  ]}
+                >
                   {g}
                 </Text>
               </TouchableOpacity>
@@ -513,10 +595,18 @@ export default function Onboarding() {
             {["Men", "Women", "Everyone"].map((g) => (
               <TouchableOpacity
                 key={g}
-                style={[styles.optionButton, data.lookingFor === g && styles.optionSelected]}
+                style={[
+                  styles.optionButton,
+                  data.lookingFor === g && styles.optionSelected,
+                ]}
                 onPress={() => update({ lookingFor: g })}
               >
-                <Text style={[styles.optionText, data.lookingFor === g && styles.optionTextSelected]}>
+                <Text
+                  style={[
+                    styles.optionText,
+                    data.lookingFor === g && styles.optionTextSelected,
+                  ]}
+                >
                   {g}
                 </Text>
               </TouchableOpacity>
@@ -532,7 +622,10 @@ export default function Onboarding() {
             <Text style={styles.stepSubtitle}>
               We use your location to show you people nearby. You can skip this.
             </Text>
-            <TouchableOpacity style={styles.primaryButton} onPress={requestLocation}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={requestLocation}
+            >
               <Text style={styles.primaryButtonText}>Allow Location</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.skipButton} onPress={nextStep}>
@@ -546,18 +639,26 @@ export default function Onboarding() {
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Add your photos</Text>
-            <Text style={styles.stepSubtitle}>Add at least 1 photo. Up to 6.</Text>
+            <Text style={styles.stepSubtitle}>
+              Add at least 1 photo. Up to 6.
+            </Text>
             <View style={styles.photoGrid}>
               {data.photos.map((uri, i) => (
                 <View key={i} style={styles.photoSlot}>
                   <Image source={{ uri }} style={styles.photo} />
-                  <TouchableOpacity style={styles.removePhoto} onPress={() => removePhoto(i)}>
+                  <TouchableOpacity
+                    style={styles.removePhoto}
+                    onPress={() => removePhoto(i)}
+                  >
                     <Text style={styles.removePhotoText}>✕</Text>
                   </TouchableOpacity>
                 </View>
               ))}
               {data.photos.length < 6 && (
-                <TouchableOpacity style={styles.addPhotoSlot} onPress={pickPhoto}>
+                <TouchableOpacity
+                  style={styles.addPhotoSlot}
+                  onPress={pickPhoto}
+                >
                   <Text style={styles.addPhotoText}>+</Text>
                 </TouchableOpacity>
               )}
@@ -568,7 +669,10 @@ export default function Onboarding() {
       // Step 6 — Prompts
       case 6:
         return (
-          <ScrollView style={styles.scrollStep} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollStep}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.stepTitle}>Choose your prompts</Text>
             <Text style={styles.stepSubtitle}>
               Pick 2–3 prompts and answer them. They help start conversations.
@@ -598,7 +702,10 @@ export default function Onboarding() {
                   multiline
                   autoFocus
                 />
-                <TouchableOpacity style={styles.primaryButton} onPress={savePromptAnswer}>
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={savePromptAnswer}
+                >
                   <Text style={styles.primaryButtonText}>Save Answer</Text>
                 </TouchableOpacity>
               </View>
@@ -608,19 +715,26 @@ export default function Onboarding() {
             {data.prompts.length < 3 && !activePrompt && (
               <>
                 <Text style={styles.sectionLabel}>Suggested for you</Text>
-                {(showAllPrompts ? ALL_PROMPTS : suggestedPrompts).map((prompt) => {
-                  const already = data.prompts.find((p) => p.prompt === prompt);
-                  return (
-                    <TouchableOpacity
-                      key={prompt}
-                      style={[styles.promptOption, already && styles.promptOptionUsed]}
-                      onPress={() => !already && selectPrompt(prompt)}
-                      disabled={!!already}
-                    >
-                      <Text style={styles.promptOptionText}>{prompt}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                {(showAllPrompts ? ALL_PROMPTS : suggestedPrompts).map(
+                  (prompt) => {
+                    const already = data.prompts.find(
+                      (p) => p.prompt === prompt,
+                    );
+                    return (
+                      <TouchableOpacity
+                        key={prompt}
+                        style={[
+                          styles.promptOption,
+                          already && styles.promptOptionUsed,
+                        ]}
+                        onPress={() => !already && selectPrompt(prompt)}
+                        disabled={!!already}
+                      >
+                        <Text style={styles.promptOptionText}>{prompt}</Text>
+                      </TouchableOpacity>
+                    );
+                  },
+                )}
                 {!showAllPrompts && (
                   <TouchableOpacity onPress={() => setShowAllPrompts(true)}>
                     <Text style={styles.seeMore}>See more prompts</Text>
@@ -634,7 +748,10 @@ export default function Onboarding() {
       // Step 7 — Interests
       case 7:
         return (
-          <ScrollView style={styles.scrollStep} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollStep}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.stepTitle}>What are you into?</Text>
             <Text style={styles.stepSubtitle}>Pick up to 5 interests.</Text>
             {INTEREST_CATEGORIES.map((cat) => (
@@ -649,7 +766,12 @@ export default function Onboarding() {
                         style={[styles.chip, selected && styles.chipSelected]}
                         onPress={() => toggleInterest(interest)}
                       >
-                        <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                        <Text
+                          style={[
+                            styles.chipText,
+                            selected && styles.chipTextSelected,
+                          ]}
+                        >
                           {interest}
                         </Text>
                       </TouchableOpacity>
@@ -674,7 +796,10 @@ export default function Onboarding() {
             ].map((intent) => (
               <TouchableOpacity
                 key={intent}
-                style={[styles.optionButton, data.datingIntent === intent && styles.optionSelected]}
+                style={[
+                  styles.optionButton,
+                  data.datingIntent === intent && styles.optionSelected,
+                ]}
                 onPress={() => update({ datingIntent: intent })}
               >
                 <Text
@@ -697,14 +822,19 @@ export default function Onboarding() {
             <Text style={styles.stepTitle}>Welcome to COMET.</Text>
             <Text style={styles.orbitExplain}>
               COMET is built around one idea:{"\n\n"}
-              <Text style={styles.orbitHighlight}>one match at a time.</Text>
+              <Text style={styles.orbitHighlight}>One match at a time.</Text>
             </Text>
             <Text style={styles.orbitBody}>
-              When you and someone both signal each other, a{" "}
-              <Text style={styles.orbitHighlight}>Collision</Text> occurs.{"\n\n"}
-              You enter <Text style={styles.orbitHighlight}>Orbit</Text> — an exclusive chat phase
-              where discovery pauses and you focus on one connection.{"\n\n"}
-              You can <Text style={styles.orbitHighlight}>Drift</Text> anytime. No pressure.
+              If you're interested in someone, send them a{" "}
+              <Text style={styles.orbitHighlight}>Signal</Text>.{"\n\n"}When you
+              and someone both signal each other, a{" "}
+              <Text style={styles.orbitHighlight}>Collision</Text> occurs.
+              {"\n\n"}
+              You enter <Text style={styles.orbitHighlight}>Orbit</Text> — an
+              exclusive chat phase where discovery pauses and you focus on one
+              connection.{"\n\n"}
+              You can <Text style={styles.orbitHighlight}>Drift</Text> anytime.
+              No pressure.
             </Text>
           </View>
         );
@@ -720,10 +850,21 @@ export default function Onboarding() {
   const isLocationStep = step === 4;
 
   return (
-    <LinearGradient colors={["#164271", "#000000"]} style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <LinearGradient
+      colors={["#164271", "#000000"]}
+      style={[
+        styles.container,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
       {/* Progress bar */}
       <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${((step + 1) / TOTAL_STEPS) * 100}%` }]} />
+        <View
+          style={[
+            styles.progressFill,
+            { width: `${((step + 1) / TOTAL_STEPS) * 100}%` },
+          ]}
+        />
       </View>
 
       {/* Back button */}
@@ -739,14 +880,19 @@ export default function Onboarding() {
       {/* Next / Finish button — hidden on location step (it handles its own nav) */}
       {!isLocationStep && (
         <TouchableOpacity
-          style={[styles.nextButton, !canAdvance() && styles.nextButtonDisabled]}
+          style={[
+            styles.nextButton,
+            !canAdvance() && styles.nextButtonDisabled,
+          ]}
           onPress={isLastStep ? saveProfile : nextStep}
           disabled={!canAdvance() || saving}
         >
           {saving ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.nextButtonText}>{isLastStep ? "Let's go" : "Continue"}</Text>
+            <Text style={styles.nextButtonText}>
+              {isLastStep ? "Let's go" : "Continue"}
+            </Text>
           )}
         </TouchableOpacity>
       )}

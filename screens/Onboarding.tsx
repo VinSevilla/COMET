@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   AppState,
   Image,
   Linking,
@@ -344,6 +345,10 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [showPromoteModal, setShowPromoteModal] = useState(false);
+  const [showPhotoSheet, setShowPhotoSheet] = useState(false);
+  const [pendingSlot, setPendingSlot] = useState<number>(0);
+  const sheetAnim = useRef(new Animated.Value(300)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
   const [suggestedPrompts] = useState<string[]>(getSuggestedPrompts());
   const [showAllPrompts, setShowAllPrompts] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
@@ -405,7 +410,26 @@ export default function Onboarding() {
 
   // ─── Photo Picker ──────────────────────────────────────────────────────────
 
-  async function takeLivePhoto() {
+  function openPhotoOptions(slot: number) {
+    setPendingSlot(slot);
+    sheetAnim.setValue(300);
+    backdropAnim.setValue(0);
+    setShowPhotoSheet(true);
+    Animated.parallel([
+      Animated.timing(backdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.spring(sheetAnim, { toValue: 0, useNativeDriver: true, damping: 20, stiffness: 180, mass: 1 }),
+    ]).start();
+  }
+
+  function closePhotoSheet() {
+    Animated.parallel([
+      Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(sheetAnim, { toValue: 300, duration: 220, useNativeDriver: true }),
+    ]).start(() => setShowPhotoSheet(false));
+  }
+
+  async function takeLivePhoto(slotIndex: number) {
+    setShowPhotoSheet(false);
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("Permission needed", "Allow camera access to take a photo.");
@@ -419,18 +443,13 @@ export default function Onboarding() {
     });
     if (!result.canceled) {
       const next = [...data.photos];
-      if (next.length === 0) {
-        next.push(result.assets[0].uri);
-      } else if (next.length < 5) {
-        next.push(result.assets[0].uri);
-      } else {
-        next[0] = result.assets[0].uri;
-      }
+      next[slotIndex] = result.assets[0].uri;
       update({ photos: next });
     }
   }
 
   async function pickPhoto(slotIndex: number) {
+    setShowPhotoSheet(false);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
@@ -804,7 +823,7 @@ export default function Onboarding() {
             {/* Main photo slot */}
             <TouchableOpacity
               style={styles.photoMainSlot}
-              onPress={() => pickPhoto(0)}
+              onPress={() => openPhotoOptions(0)}
               activeOpacity={0.8}
             >
               {data.photos[0] ? (
@@ -853,19 +872,21 @@ export default function Onboarding() {
                     Choose your main photo
                   </Text>
                   <View style={styles.promoteGrid}>
-                    {[1, 2, 3, 4].filter((i) => data.photos[i]).map((i) => (
-                      <TouchableOpacity
-                        key={i}
-                        onPress={() => promoteToMain(i)}
-                        activeOpacity={0.8}
-                        style={styles.promoteThumb}
-                      >
-                        <Image
-                          source={{ uri: data.photos[i] }}
-                          style={styles.promoteThumbImage}
-                        />
-                      </TouchableOpacity>
-                    ))}
+                    {[1, 2, 3, 4]
+                      .filter((i) => data.photos[i])
+                      .map((i) => (
+                        <TouchableOpacity
+                          key={i}
+                          onPress={() => promoteToMain(i)}
+                          activeOpacity={0.8}
+                          style={styles.promoteThumb}
+                        >
+                          <Image
+                            source={{ uri: data.photos[i] }}
+                            style={styles.promoteThumbImage}
+                          />
+                        </TouchableOpacity>
+                      ))}
                   </View>
                 </View>
               </TouchableOpacity>
@@ -877,7 +898,7 @@ export default function Onboarding() {
                 <TouchableOpacity
                   key={slot}
                   style={styles.photoSecondarySlot}
-                  onPress={() => pickPhoto(slot)}
+                  onPress={() => openPhotoOptions(slot)}
                   activeOpacity={0.8}
                 >
                   {data.photos[slot] ? (
@@ -903,15 +924,63 @@ export default function Onboarding() {
               ))}
             </View>
 
-            {/* Take live photo */}
-            <TouchableOpacity
-              style={styles.livePhotoButton}
-              onPress={takeLivePhoto}
-              activeOpacity={0.8}
+            <Text style={styles.livePhotoSubtext}>
+              *Live photos receive a verified badge
+            </Text>
+
+            {/* Photo action sheet */}
+            <Modal
+              visible={showPhotoSheet}
+              transparent
+              animationType="none"
+              onRequestClose={closePhotoSheet}
             >
-              <Text style={styles.livePhotoText}>Take live photo</Text>
-            </TouchableOpacity>
-            <Text style={styles.livePhotoSubtext}>Get a verified badge</Text>
+              <Animated.View
+                style={[styles.photoSheetBackdrop, { opacity: backdropAnim }]}
+                pointerEvents="box-none"
+              >
+                <TouchableOpacity
+                  style={StyleSheet.absoluteFill}
+                  activeOpacity={1}
+                  onPress={closePhotoSheet}
+                />
+                <Animated.View
+                  style={[
+                    styles.photoSheet,
+                    { transform: [{ translateY: sheetAnim }] },
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={styles.photoSheetOption}
+                    activeOpacity={0.7}
+                    onPress={() => pickPhoto(pendingSlot)}
+                  >
+                    <Text style={styles.photoSheetOptionText}>
+                      Upload photo
+                    </Text>
+                  </TouchableOpacity>
+                  <View style={styles.photoSheetDivider} />
+                  <TouchableOpacity
+                    style={styles.photoSheetOption}
+                    activeOpacity={0.7}
+                    onPress={() => takeLivePhoto(pendingSlot)}
+                  >
+                    <Text style={styles.photoSheetOptionText}>
+                      Take live photo{" "}
+                      <Text style={styles.photoSheetVerified}>(verified)</Text>
+                    </Text>
+                  </TouchableOpacity>
+                  <View style={styles.photoSheetDivider} />
+                  <TouchableOpacity
+                    style={styles.photoSheetOption}
+                    activeOpacity={0.7}
+                    onPress={closePhotoSheet}
+                  >
+                    <Text style={styles.photoSheetCancel}>Cancel</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </Animated.View>
+            </Modal>
           </View>
         );
 
@@ -1375,28 +1444,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Montserrat-Regular",
   },
-  livePhotoButton: {
-    alignSelf: "center",
-    marginTop: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: "#2A7DE1",
-  },
-  livePhotoText: {
-    color: "#2A7DE1",
-    fontSize: 13,
-    fontFamily: "Montserrat-Bold",
-    letterSpacing: 0.5,
-  },
   livePhotoSubtext: {
     color: "#6A8FAF",
     fontSize: 12,
     fontFamily: "Montserrat-Regular",
     fontStyle: "italic",
     textAlign: "center",
-    marginTop: 6,
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  photoSheetBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  photoSheet: {
+    marginHorizontal: 16,
+    marginBottom: 40,
+    backgroundColor: "#0d1f33",
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  photoSheetCancel: {
+    color: "#6A8FAF",
+    fontSize: 15,
+    fontFamily: "Montserrat-Regular",
+  },
+  photoSheetOption: {
+    paddingVertical: 18,
+    alignItems: "center",
+  },
+  photoSheetOptionText: {
+    color: "#EAF6FF",
+    fontSize: 15,
+    fontFamily: "Montserrat-Regular",
+  },
+  photoSheetDivider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  photoSheetVerified: {
+    color: "#3CF6D5",
+    fontSize: 15,
+    fontFamily: "Montserrat-Regular",
   },
   promoteBanner: {
     marginTop: 8,

@@ -347,6 +347,7 @@ export default function Onboarding() {
   const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [showPhotoSheet, setShowPhotoSheet] = useState(false);
   const [pendingSlot, setPendingSlot] = useState<number>(0);
+  const [livePhotoUris, setLivePhotoUris] = useState<string[]>([]);
   const sheetAnim = useRef(new Animated.Value(300)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const [suggestedPrompts] = useState<string[]>(getSuggestedPrompts());
@@ -416,34 +417,58 @@ export default function Onboarding() {
     backdropAnim.setValue(0);
     setShowPhotoSheet(true);
     Animated.parallel([
-      Animated.timing(backdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-      Animated.spring(sheetAnim, { toValue: 0, useNativeDriver: true, damping: 20, stiffness: 180, mass: 1 }),
+      Animated.timing(backdropAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.spring(sheetAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        damping: 20,
+        stiffness: 180,
+        mass: 1,
+      }),
     ]).start();
   }
 
   function closePhotoSheet() {
     Animated.parallel([
-      Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-      Animated.timing(sheetAnim, { toValue: 300, duration: 220, useNativeDriver: true }),
+      Animated.timing(backdropAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheetAnim, {
+        toValue: 300,
+        duration: 220,
+        useNativeDriver: true,
+      }),
     ]).start(() => setShowPhotoSheet(false));
   }
 
   async function takeLivePhoto(slotIndex: number) {
     setShowPhotoSheet(false);
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    // REPLACE: requestCameraPermissionsAsync
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("Permission needed", "Allow camera access to take a photo.");
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({
+    //REPLACE: witt --> .launchImageCameraAsync
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
       allowsEditing: true,
       aspect: [3, 4],
       quality: 0.8,
     });
     if (!result.canceled) {
+      const uri = result.assets[0].uri;
       const next = [...data.photos];
-      next[slotIndex] = result.assets[0].uri;
+      const old = next[slotIndex];
+      if (old) setLivePhotoUris((prev) => prev.filter((u) => u !== old));
+      next[slotIndex] = uri;
+      setLivePhotoUris((prev) => [...prev, uri]);
       update({ photos: next });
     }
   }
@@ -466,12 +491,16 @@ export default function Onboarding() {
     });
     if (!result.canceled) {
       const next = [...data.photos];
+      const old = next[slotIndex];
+      if (old) setLivePhotoUris((prev) => prev.filter((u) => u !== old));
       next[slotIndex] = result.assets[0].uri;
       update({ photos: next });
     }
   }
 
   function removePhoto(index: number) {
+    const removed = data.photos[index];
+    if (removed) setLivePhotoUris((prev) => prev.filter((u) => u !== removed));
     update({ photos: data.photos.filter((_, i) => i !== index) });
   }
 
@@ -822,7 +851,10 @@ export default function Onboarding() {
 
             {/* Main photo slot */}
             <TouchableOpacity
-              style={styles.photoMainSlot}
+              style={[
+                styles.photoMainSlot,
+                livePhotoUris.includes(data.photos[0]) && styles.photoLiveGlow,
+              ]}
               onPress={() => openPhotoOptions(0)}
               activeOpacity={0.8}
             >
@@ -832,6 +864,13 @@ export default function Onboarding() {
                     source={{ uri: data.photos[0] }}
                     style={styles.photoMainImage}
                   />
+                  {livePhotoUris.includes(data.photos[0]) && (
+                    <LinearGradient
+                      colors={["rgba(60,246,213,0.0)", "rgba(60,246,213,0.07)"]}
+                      style={StyleSheet.absoluteFill}
+                      pointerEvents="none"
+                    />
+                  )}
                   <TouchableOpacity
                     style={styles.removePhoto}
                     onPress={() => removePhoto(0)}
@@ -897,7 +936,11 @@ export default function Onboarding() {
               {[1, 2, 3, 4].map((slot) => (
                 <TouchableOpacity
                   key={slot}
-                  style={styles.photoSecondarySlot}
+                  style={[
+                    styles.photoSecondarySlot,
+                    livePhotoUris.includes(data.photos[slot]) &&
+                      styles.photoLiveGlow,
+                  ]}
                   onPress={() => openPhotoOptions(slot)}
                   activeOpacity={0.8}
                 >
@@ -907,6 +950,16 @@ export default function Onboarding() {
                         source={{ uri: data.photos[slot] }}
                         style={styles.photoSecondaryImage}
                       />
+                      {livePhotoUris.includes(data.photos[slot]) && (
+                        <LinearGradient
+                          colors={[
+                            "rgba(60,246,213,0.0)",
+                            "rgba(60,246,213,0.07)",
+                          ]}
+                          style={StyleSheet.absoluteFill}
+                          pointerEvents="none"
+                        />
+                      )}
                       <TouchableOpacity
                         style={styles.removePhoto}
                         onPress={() => removePhoto(slot)}
@@ -1415,6 +1468,15 @@ const styles = StyleSheet.create({
   photoSecondaryImage: {
     width: "100%",
     height: "100%",
+  },
+  photoLiveGlow: {
+    borderColor: "#3CF6D5",
+    borderWidth: 1.5,
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 6,
   },
   addPhotoPlus: {
     color: "#fff",

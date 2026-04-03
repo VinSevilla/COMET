@@ -344,6 +344,7 @@ export default function Onboarding() {
 
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState("");
   const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [showPhotoSheet, setShowPhotoSheet] = useState(false);
   const [pendingSlot, setPendingSlot] = useState<number>(0);
@@ -623,7 +624,7 @@ export default function Onboarding() {
   function canAdvance(): boolean {
     switch (step) {
       case 0:
-        return data.name.trim().length > 0;
+        return data.name.trim().length >= 1 && !/[^a-zA-ZÀ-ÖØ-öø-ÿ\s'\-]/.test(data.name);
       case 1:
         return data.birthday.trim().length > 0;
       case 2:
@@ -666,9 +667,18 @@ export default function Onboarding() {
               placeholder="First name"
               placeholderTextColor="#555"
               value={data.name}
-              onChangeText={(v) => update({ name: v })}
+              onChangeText={(v) => {
+                const hasInvalid = /[^a-zA-ZÀ-ÖØ-öø-ÿ\s'\-]/.test(v);
+                setNameError(hasInvalid ? "Only letters, spaces, hyphens, and apostrophes are allowed." : "");
+                update({ name: v });
+              }}
               autoFocus
+              autoCapitalize="words"
+              maxLength={30}
             />
+            {nameError ? (
+              <Text style={styles.nameError}>{nameError}</Text>
+            ) : null}
           </View>
         );
 
@@ -1329,6 +1339,12 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Regular",
     color: "#888",
     marginBottom: 24,
+  },
+  nameError: {
+    color: "#FFB347",
+    fontSize: 12,
+    fontFamily: "Montserrat-Regular",
+    marginTop: 6,
   },
   input: {
     backgroundColor: "#1a1a1a",

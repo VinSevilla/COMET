@@ -97,7 +97,15 @@ function getSuggestedPrompts(): string[] {
 const INTEREST_CATEGORIES = [
   {
     category: "Social",
-    interests: ["Coffee", "Brunch", "Traveling", "Fashion", "Foodie"],
+    interests: [
+      "Coffee",
+      "Brunch",
+      "Traveling",
+      "Fashion",
+      "Foodie",
+      "Partying",
+      "Shopping",
+    ],
   },
   {
     category: "Outdoors",
@@ -105,23 +113,56 @@ const INTEREST_CATEGORIES = [
   },
   {
     category: "Fitness",
-    interests: ["Gym", "Running", "Yoga", "Cycling", "Sports"],
+    interests: [
+      "Gym",
+      "Running",
+      "Yoga",
+      "Cycling",
+      "Pilates",
+      "Swimming",
+      "Sports",
+    ],
   },
   {
     category: "Creative",
-    interests: ["Art", "Writing", "Music", "Film", "Photography"],
+    interests: [
+      "Art",
+      "Writing",
+      "Music",
+      "Dancing",
+      "Singing",
+      "Film",
+      "Photography",
+    ],
   },
   {
     category: "Entertainment",
-    interests: ["Gaming", "Movies", "TV shows", "Podcasts", "Anime"],
+    interests: [
+      "Gaming",
+      "Movies",
+      "TV shows",
+      "Podcasts",
+      "Anime",
+      "Comics",
+      "Cartoons",
+      "D&D",
+      "Card games",
+    ],
   },
   {
     category: "Intellectual",
-    interests: ["Reading", "History", "Science", "Tech"],
+    interests: ["Reading", "History", "Science", "Tech", "Chess"],
   },
   {
     category: "Everyday",
-    interests: ["Cooking", "Baking", "Gardening", "Board games"],
+    interests: [
+      "Cooking",
+      "Baking",
+      "Gardening",
+      "Animals",
+      "Astrology",
+      "Cars",
+    ],
   },
 ];
 
@@ -316,14 +357,14 @@ function BirthdayPicker({
   );
 }
 
-// ─── Lifestyle Option Button ─────────────────────────────────────────────────
+// ─── Interest Chip Button ────────────────────────────────────────────────────
 
-function LifestyleOption({
-  opt,
+function InterestChip({
+  label,
   selected,
   onPress,
 }: {
-  opt: string;
+  label: string;
   selected: boolean;
   onPress: () => void;
 }) {
@@ -339,7 +380,61 @@ function LifestyleOption({
 
   return (
     <TouchableOpacity
-      style={styles.lifestyleOptionWrapper}
+      style={styles.interestChip}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { opacity: anim, borderRadius: 30 }]}
+        pointerEvents="none"
+      >
+        <LinearGradient
+          colors={["#59DAE3", "#0B5CB4"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.interestChipGradientBorder}
+        >
+          <View style={styles.interestChipInner} />
+        </LinearGradient>
+      </Animated.View>
+      <Text
+        style={[
+          styles.interestChipText,
+          selected && styles.interestChipTextSelected,
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Lifestyle Option Button ─────────────────────────────────────────────────
+
+function LifestyleOption({
+  opt,
+  selected,
+  onPress,
+  wrapStyle,
+}: {
+  opt: string;
+  selected: boolean;
+  onPress: () => void;
+  wrapStyle?: object;
+}) {
+  const anim = useRef(new Animated.Value(selected ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: selected ? 1 : 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, [selected]);
+
+  return (
+    <TouchableOpacity
+      style={[styles.lifestyleOptionWrapper, wrapStyle]}
       onPress={onPress}
       activeOpacity={0.75}
     >
@@ -464,7 +559,7 @@ export default function Onboarding() {
   }
 
   function handleContinue() {
-    if (step === 9 && !data.photos[0] && data.photos.some(Boolean)) {
+    if (step === 10 && !data.photos[0] && data.photos.some(Boolean)) {
       setShowPromoteModal(true);
       return;
     }
@@ -712,15 +807,15 @@ export default function Onboarding() {
       case 7:
         return data.career.school !== "" && data.career.work !== "";
       case 8:
-        return true; // location — always can skip
-      case 9:
-        return data.photos.some(Boolean);
-      case 10:
-        return data.prompts.length >= 2;
-      case 11:
         return data.interests.length > 0;
-      case 12:
+      case 9:
+        return data.prompts.length >= 2;
+      case 10:
+        return data.photos.some(Boolean);
+      case 11:
         return data.datingIntent !== "";
+      case 12:
+        return true; // location — always can skip
       case 13:
         return true;
       default:
@@ -970,14 +1065,14 @@ export default function Onboarding() {
               "glass-wine",
               "Do you drink?",
               "drink",
-              ["Socially", "Frequently", "Never"],
+              ["Frequently", "Socially", "Never"],
               true,
             )}
             {lifestyleRow(
               "smoking",
               "Do you smoke?",
               "smoke",
-              ["Socially", "Frequently", "Never"],
+              ["Frequently", "Socially", "Never"],
               true,
             )}
             {lifestyleRow(
@@ -999,13 +1094,19 @@ export default function Onboarding() {
           field: keyof typeof data.career,
           options: string[],
           showDivider: boolean,
+          wrap = false,
         ) => (
           <View key={field}>
             <View style={styles.lifestyleQuestion}>
               <MaterialCommunityIcons name={icon} size={20} color="#6A8FAF" />
               <Text style={styles.lifestyleQuestionText}>{question}</Text>
             </View>
-            <View style={styles.lifestyleOptions}>
+            <View
+              style={[
+                styles.lifestyleOptions,
+                wrap && { flexWrap: "wrap", gap: 6 },
+              ]}
+            >
               {options.map((opt) => (
                 <LifestyleOption
                   key={opt}
@@ -1014,6 +1115,7 @@ export default function Onboarding() {
                   onPress={() =>
                     update({ career: { ...data.career, [field]: opt } })
                   }
+                  wrapStyle={wrap ? { flex: 0, width: "31%" } : undefined}
                 />
               ))}
             </View>
@@ -1033,7 +1135,8 @@ export default function Onboarding() {
               "school",
               "Are you in school?",
               "school",
-              ["College", "Grad school", "Trade school"],
+              ["No", "College", "Grad school", "Trade school"],
+              true,
               true,
             )}
             {careerRow(
@@ -1047,49 +1150,40 @@ export default function Onboarding() {
         );
       }
 
-      // Step 8 — Location
-      case 8:
+      // Step 11 — Dating intent
+      case 11:
         return (
           <View style={styles.stepContainer}>
-            {locationDenied ? (
-              <>
-                <Text style={styles.stepTitle}>Location required</Text>
-                <Text style={styles.stepSubtitle}>
-                  Location is required to discover matches nearby.{"\n"}Please
-                  enable location to continue.
+            <Text style={styles.stepTitle}>What are you hoping to find?</Text>
+            {[
+              "A meaningful relationship",
+              "Something that could grow into more",
+              "Taking things slow",
+              "Still figuring it out",
+            ].map((intent) => (
+              <TouchableOpacity
+                key={intent}
+                style={[
+                  styles.optionButton,
+                  data.datingIntent === intent && styles.optionSelected,
+                ]}
+                onPress={() => update({ datingIntent: intent })}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    data.datingIntent === intent && styles.optionTextSelected,
+                  ]}
+                >
+                  {intent}
                 </Text>
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={() => Linking.openSettings()}
-                >
-                  <Text style={styles.primaryButtonText}>Open Settings</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.skipButton}
-                  onPress={requestLocation}
-                >
-                  <Text style={styles.skipText}>Try Again</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <Text style={styles.stepTitle}>Enable location?</Text>
-                <Text style={styles.stepSubtitle}>
-                  We use your location to show you people nearby.
-                </Text>
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={requestLocation}
-                >
-                  <Text style={styles.primaryButtonText}>Allow Location</Text>
-                </TouchableOpacity>
-              </>
-            )}
+              </TouchableOpacity>
+            ))}
           </View>
         );
 
-      // Step 6 — Photos
-      case 6:
+      // Step 10 — Photos
+      case 10:
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Add your photos</Text>
@@ -1285,8 +1379,8 @@ export default function Onboarding() {
           </View>
         );
 
-      // Step 7 — Prompts
-      case 7:
+      // Step 9 — Prompts
+      case 9:
         return (
           <ScrollView
             style={styles.scrollStep}
@@ -1377,65 +1471,63 @@ export default function Onboarding() {
               <View key={cat.category}>
                 <Text style={styles.sectionLabel}>{cat.category}</Text>
                 <View style={styles.chipRow}>
-                  {cat.interests.map((interest) => {
-                    const selected = data.interests.includes(interest);
-                    return (
-                      <TouchableOpacity
-                        key={interest}
-                        style={[styles.chip, selected && styles.chipSelected]}
-                        onPress={() => toggleInterest(interest)}
-                      >
-                        <Text
-                          style={[
-                            styles.chipText,
-                            selected && styles.chipTextSelected,
-                          ]}
-                        >
-                          {interest}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                  {cat.interests.map((interest) => (
+                    <InterestChip
+                      key={interest}
+                      label={interest}
+                      selected={data.interests.includes(interest)}
+                      onPress={() => toggleInterest(interest)}
+                    />
+                  ))}
                 </View>
               </View>
             ))}
           </ScrollView>
         );
 
-      // Step 9 — Dating intent
-      case 9:
+      // Step 12 — Location
+      case 12:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>What are you hoping to find?</Text>
-            {[
-              "A meaningful relationship",
-              "Something that could grow into more",
-              "Taking things slow",
-              "Still figuring it out",
-            ].map((intent) => (
-              <TouchableOpacity
-                key={intent}
-                style={[
-                  styles.optionButton,
-                  data.datingIntent === intent && styles.optionSelected,
-                ]}
-                onPress={() => update({ datingIntent: intent })}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    data.datingIntent === intent && styles.optionTextSelected,
-                  ]}
-                >
-                  {intent}
+            {locationDenied ? (
+              <>
+                <Text style={styles.stepTitle}>Location required</Text>
+                <Text style={styles.stepSubtitle}>
+                  Location is required to discover matches nearby.{"\n"}Please
+                  enable location to continue.
                 </Text>
-              </TouchableOpacity>
-            ))}
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={() => Linking.openSettings()}
+                >
+                  <Text style={styles.primaryButtonText}>Open Settings</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.skipButton}
+                  onPress={requestLocation}
+                >
+                  <Text style={styles.skipText}>Try Again</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={styles.stepTitle}>Enable location?</Text>
+                <Text style={styles.stepSubtitle}>
+                  We use your location to show you people nearby.
+                </Text>
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={requestLocation}
+                >
+                  <Text style={styles.primaryButtonText}>Allow Location</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         );
 
-      // Step 10 — Orbit explanation
-      case 10:
+      // Step 13 — Orbit explanation
+      case 13:
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Welcome to COMET.</Text>
@@ -1466,7 +1558,7 @@ export default function Onboarding() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   const isLastStep = step === TOTAL_STEPS - 1;
-  const isLocationStep = step === 8;
+  const isLocationStep = step === 12;
 
   return (
     <LinearGradient
@@ -1795,6 +1887,7 @@ const styles = StyleSheet.create({
   },
   lifestyleOptions: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     marginBottom: 24,
   },
@@ -1814,7 +1907,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#0a1929",
   },
   lifestyleOption: {
-    paddingVertical: 15,
+    paddingVertical: 18,
+    paddingHorizontal: 12,
     borderRadius: 30,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.15)",
@@ -1824,6 +1918,7 @@ const styles = StyleSheet.create({
   lifestyleOptionLabel: {
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 6,
   },
   lifestyleOptionText: {
     color: "#6A8FAF",
@@ -1956,7 +2051,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   sectionLabel: {
-    color: "#555",
+    color: "#fff",
     fontSize: 12,
     fontFamily: "Montserrat-Bold",
     textTransform: "uppercase",
@@ -2033,25 +2128,32 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  chip: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+  interestChip: {
+    borderRadius: 30,
     borderWidth: 1,
-    borderColor: "#1a1a1a",
+    borderColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "#0a1929",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
   },
-  chipSelected: {
-    backgroundColor: "#0d1f33",
-    borderColor: "#2A7DE1",
+  interestChipGradientBorder: {
+    flex: 1,
+    borderRadius: 30,
+    padding: 1.5,
   },
-  chipText: {
-    color: "#aaa",
-    fontSize: 14,
+  interestChipInner: {
+    flex: 1,
+    borderRadius: 28,
+    backgroundColor: "#0a1929",
+  },
+  interestChipText: {
+    color: "#6A8FAF",
+    fontSize: 13,
     fontFamily: "Montserrat-Regular",
   },
-  chipTextSelected: {
-    color: "#2A7DE1",
+  interestChipTextSelected: {
+    color: "#EAF6FF",
+    fontSize: 13,
     fontFamily: "Montserrat-Bold",
   },
   orbitExplain: {

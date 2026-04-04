@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Slider } from "@miblanchard/react-native-slider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Slider } from "@miblanchard/react-native-slider";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
@@ -313,6 +313,64 @@ function BirthdayPicker({
         />
       </View>
     </View>
+  );
+}
+
+// ─── Lifestyle Option Button ─────────────────────────────────────────────────
+
+function LifestyleOption({
+  opt,
+  selected,
+  onPress,
+}: {
+  opt: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const anim = useRef(new Animated.Value(selected ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: selected ? 1 : 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, [selected]);
+
+  return (
+    <TouchableOpacity
+      style={styles.lifestyleOptionWrapper}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <View style={styles.lifestyleOption} />
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { opacity: anim }]}
+        pointerEvents="none"
+      >
+        <LinearGradient
+          colors={["#59DAE3", "#0B5CB4"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.lifestyleOptionGradientBorder}
+        >
+          <View style={styles.lifestyleOptionInner} />
+        </LinearGradient>
+      </Animated.View>
+      <View
+        style={[StyleSheet.absoluteFill, styles.lifestyleOptionLabel]}
+        pointerEvents="none"
+      >
+        <Text
+          style={[
+            styles.lifestyleOptionText,
+            selected && styles.lifestyleOptionTextSelected,
+          ]}
+        >
+          {opt}
+        </Text>
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -881,31 +939,16 @@ export default function Onboarding() {
               <Text style={styles.lifestyleQuestionText}>{question}</Text>
             </View>
             <View style={styles.lifestyleOptions}>
-              {options.map((opt) => {
-                const selected = data.lifestyle[field] === opt;
-                return (
-                  <TouchableOpacity
-                    key={opt}
-                    style={[
-                      styles.lifestyleOption,
-                      selected && styles.lifestyleOptionSelected,
-                    ]}
-                    onPress={() =>
-                      update({ lifestyle: { ...data.lifestyle, [field]: opt } })
-                    }
-                    activeOpacity={0.75}
-                  >
-                    <Text
-                      style={[
-                        styles.lifestyleOptionText,
-                        selected && styles.lifestyleOptionTextSelected,
-                      ]}
-                    >
-                      {opt}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+              {options.map((opt) => (
+                <LifestyleOption
+                  key={opt}
+                  opt={opt}
+                  selected={data.lifestyle[field] === opt}
+                  onPress={() =>
+                    update({ lifestyle: { ...data.lifestyle, [field]: opt } })
+                  }
+                />
+              ))}
             </View>
             {showDivider && <View style={styles.lifestyleDivider} />}
           </View>
@@ -913,13 +956,33 @@ export default function Onboarding() {
 
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>What's your lifestyle like?</Text>
+            <Text style={styles.stepTitle}>
+              What's your{"\n"}lifestyle like?
+            </Text>
             <Text style={styles.stepSubtitle}>
               Help others understand how you live.
             </Text>
-            {lifestyleRow("glass-wine", "Do you drink?", "drink", ["Socially", "Frequently", "Never"], true)}
-            {lifestyleRow("smoking", "Do you smoke?", "smoke", ["Socially", "Frequently", "Never"], true)}
-            {lifestyleRow("dumbbell", "Do you workout?", "workout", ["Often", "Sometimes", "Never"], false)}
+            {lifestyleRow(
+              "glass-wine",
+              "Do you drink?",
+              "drink",
+              ["Socially", "Frequently", "Never"],
+              true,
+            )}
+            {lifestyleRow(
+              "smoking",
+              "Do you smoke?",
+              "smoke",
+              ["Socially", "Frequently", "Never"],
+              true,
+            )}
+            {lifestyleRow(
+              "dumbbell",
+              "Do you workout?",
+              "workout",
+              ["Often", "Sometimes", "Never"],
+              false,
+            )}
           </View>
         );
       }
@@ -1673,20 +1736,34 @@ const styles = StyleSheet.create({
   lifestyleOptions: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 24,
+  },
+  lifestyleOptionWrapper: {
+    flex: 1,
+  },
+  lifestyleOptionGradientBorder: {
+    flex: 1,
+    borderRadius: 30,
+    padding: 1.5,
+  },
+  lifestyleOptionInner: {
+    flex: 1,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0a1929",
   },
   lifestyleOption: {
-    flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 15,
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    borderColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "transparent",
     alignItems: "center",
   },
-  lifestyleOptionSelected: {
-    borderColor: "#2A7DE1",
-    backgroundColor: "rgba(42,125,225,0.15)",
+  lifestyleOptionLabel: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   lifestyleOptionText: {
     color: "#6A8FAF",
@@ -1695,12 +1772,13 @@ const styles = StyleSheet.create({
   },
   lifestyleOptionTextSelected: {
     color: "#EAF6FF",
+    fontSize: 13,
     fontFamily: "Montserrat-Bold",
   },
   lifestyleDivider: {
     height: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    marginBottom: 20,
+    backgroundColor: "rgba(255,255,255,.9)",
+    marginBottom: 24,
   },
   livePhotoSubtext: {
     color: "#6A8FAF",

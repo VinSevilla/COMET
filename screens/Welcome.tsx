@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Canvas, Path, Skia } from "@shopify/react-native-skia";
 import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
-import { ResizeMode, Video } from "expo-av";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -92,6 +92,14 @@ export default function Welcome() {
 
   const insets = useSafeAreaInsets();
   const [btnDims, setBtnDims] = useState({ width: 311, height: 52 });
+  const videoPlayer = useVideoPlayer(
+    require("../assets/video/2611250-uhd-3840-2160-30fps_6bgcJBFT.mp4"),
+    (p) => {
+      p.loop = true;
+      p.muted = true;
+      p.play();
+    },
+  );
   const [musicOn, setMusicOn] = useState(true);
   const player = useAudioPlayer(
     require("../assets/audio/743831__viramiller__tranquil-tones.mp3"),
@@ -157,13 +165,11 @@ export default function Welcome() {
 
   return (
     <View style={styles.container}>
-      <Video
-        source={require("../assets/video/2611250-uhd-3840-2160-30fps_6bgcJBFT.mp4")}
+      <VideoView
+        player={videoPlayer}
         style={styles.background}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-        isMuted
+        contentFit="cover"
+        nativeControls={false}
       />
 
       {/* Bottom screen gradient overlay */}
@@ -189,15 +195,15 @@ export default function Welcome() {
 
       <SafeAreaView edges={["bottom"]}>
         <Animated.View style={[styles.buttons, { opacity: buttonsFade }]}>
-          <View>
-            <TouchableOpacity
-              style={styles.signupButton}
-              onPress={() => router.push("/(auth)/signup")}
-              onLayout={(e) => {
-                const { width, height } = e.nativeEvent.layout;
-                setBtnDims({ width, height });
-              }}
-            >
+          <TouchableOpacity
+            onPress={() => router.push("/(auth)/signup")}
+            onLayout={(e) => {
+              const { width, height } = e.nativeEvent.layout;
+              setBtnDims({ width, height });
+            }}
+            activeOpacity={0.75}
+          >
+            <View style={styles.signupButton}>
               {/* Sign Up — top/bottom inner shadow */}
               <LinearGradient
                 colors={[
@@ -236,9 +242,9 @@ export default function Welcome() {
                 pointerEvents="none"
               />
               <Text style={styles.buttonText}>CREATE AN ACCOUNT</Text>
-            </TouchableOpacity>
+            </View>
             <PillStreak width={btnDims.width} height={btnDims.height} />
-          </View>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.loginButton}

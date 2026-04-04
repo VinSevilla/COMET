@@ -64,7 +64,8 @@
         {
           "locationWhenInUsePermission": "COMET uses your location to show you people nearby."
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

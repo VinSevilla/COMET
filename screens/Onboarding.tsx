@@ -1095,6 +1095,8 @@ export default function Onboarding() {
           options: string[],
           showDivider: boolean,
           wrap = false,
+          wrapWidth = "31%",
+          wrapGap = 6,
         ) => (
           <View key={field}>
             <View style={styles.lifestyleQuestion}>
@@ -1104,7 +1106,7 @@ export default function Onboarding() {
             <View
               style={[
                 styles.lifestyleOptions,
-                wrap && { flexWrap: "wrap", gap: 6 },
+                wrap && { flexWrap: "wrap", gap: wrapGap },
               ]}
             >
               {options.map((opt) => (
@@ -1115,7 +1117,7 @@ export default function Onboarding() {
                   onPress={() =>
                     update({ career: { ...data.career, [field]: opt } })
                   }
-                  wrapStyle={wrap ? { flex: 0, width: "31%" } : undefined}
+                  wrapStyle={wrap ? { flex: 0, width: wrapWidth } : undefined}
                 />
               ))}
             </View>
@@ -1143,8 +1145,11 @@ export default function Onboarding() {
               "briefcase",
               "Are you working?",
               "work",
-              ["Unemployed", "Part-Time", "Full-Time"],
+              ["Unemployed", "Self-employed", "Part-Time", "Full-Time"],
               false,
+              true,
+              "32%",
+              4,
             )}
           </View>
         );
@@ -1927,8 +1932,6 @@ const styles = StyleSheet.create({
   },
   lifestyleOptionTextSelected: {
     color: "#EAF6FF",
-    fontSize: 13,
-    fontFamily: "Montserrat-Bold",
   },
   lifestyleDivider: {
     height: 1,
@@ -2153,8 +2156,6 @@ const styles = StyleSheet.create({
   },
   interestChipTextSelected: {
     color: "#EAF6FF",
-    fontSize: 13,
-    fontFamily: "Montserrat-Bold",
   },
   orbitExplain: {
     color: "#fff",

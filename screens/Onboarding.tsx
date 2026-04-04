@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Slider } from "@miblanchard/react-native-slider";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
@@ -325,6 +326,8 @@ type OnboardingData = {
   gender: string;
   lookingFor: string;
   ageRange: [number, number];
+  preferredDistance: number;
+  lifestyle: { drink: string; smoke: string; workout: string };
   photos: string[];
   prompts: PromptEntry[];
   interests: string[];
@@ -333,7 +336,7 @@ type OnboardingData = {
   locationLng: number | null;
 };
 
-const TOTAL_STEPS = 11;
+const TOTAL_STEPS = 13;
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -382,6 +385,8 @@ export default function Onboarding() {
     gender: "",
     lookingFor: "",
     ageRange: [18, 35],
+    preferredDistance: 25,
+    lifestyle: { drink: "", smoke: "", workout: "" },
     photos: [],
     prompts: [],
     interests: [],
@@ -399,7 +404,7 @@ export default function Onboarding() {
   }
 
   function handleContinue() {
-    if (step === 6 && !data.photos[0] && data.photos.some(Boolean)) {
+    if (step === 8 && !data.photos[0] && data.photos.some(Boolean)) {
       setShowPromoteModal(true);
       return;
     }
@@ -624,7 +629,10 @@ export default function Onboarding() {
   function canAdvance(): boolean {
     switch (step) {
       case 0:
-        return data.name.trim().length >= 1 && !/[^a-zA-ZÀ-ÖØ-öø-ÿ\s'\-]/.test(data.name);
+        return (
+          data.name.trim().length >= 1 &&
+          !/[^a-zA-ZÀ-ÖØ-öø-ÿ\s'\-]/.test(data.name)
+        );
       case 1:
         return data.birthday.trim().length > 0;
       case 2:
@@ -634,16 +642,24 @@ export default function Onboarding() {
       case 4:
         return true; // age range — always valid
       case 5:
-        return true; // location — always can skip
+        return true; // preferred distance — always valid
       case 6:
-        return data.photos.some(Boolean);
+        return (
+          data.lifestyle.drink !== "" &&
+          data.lifestyle.smoke !== "" &&
+          data.lifestyle.workout !== ""
+        );
       case 7:
-        return data.prompts.length >= 2;
+        return true; // location — always can skip
       case 8:
-        return data.interests.length > 0;
+        return data.photos.some(Boolean);
       case 9:
-        return data.datingIntent !== "";
+        return data.prompts.length >= 2;
       case 10:
+        return data.interests.length > 0;
+      case 11:
+        return data.datingIntent !== "";
+      case 12:
         return true;
       default:
         return true;
@@ -669,7 +685,11 @@ export default function Onboarding() {
               value={data.name}
               onChangeText={(v) => {
                 const hasInvalid = /[^a-zA-ZÀ-ÖØ-öø-ÿ\s'\-]/.test(v);
-                setNameError(hasInvalid ? "Only letters, spaces, hyphens, and apostrophes are allowed." : "");
+                setNameError(
+                  hasInvalid
+                    ? "Only letters, spaces, hyphens, and apostrophes are allowed."
+                    : "",
+                );
                 update({ name: v });
               }}
               autoFocus
@@ -778,15 +798,16 @@ export default function Onboarding() {
       case 4:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>
-              What is your{"\n"}preferred age range?
-            </Text>
+            <Text style={styles.stepTitle}>Who do you{"\n"}want to meet?</Text>
             <Text style={styles.stepSubtitle}>
               We'll show you people within this range.
             </Text>
-            <Text style={styles.ageRangeLabel}>
-              {data.ageRange[0]} — {data.ageRange[1]}
-            </Text>
+            <View style={styles.ageRangeRow}>
+              <Text style={styles.ageRangeLabel}>Age range:</Text>
+              <Text style={styles.ageRangeLabel}>
+                {data.ageRange[0]} – {data.ageRange[1]}
+              </Text>
+            </View>
             <Slider
               value={data.ageRange}
               onValueChange={(v: number[]) => {
@@ -798,7 +819,7 @@ export default function Onboarding() {
               step={1}
               containerStyle={styles.sliderContainer}
               trackStyle={styles.sliderTrack}
-              minimumTrackTintColor="#FFB347"
+              minimumTrackTintColor="#2A7DE1"
               maximumTrackTintColor="#4B5563"
               thumbStyle={styles.sliderThumb}
             />
@@ -809,8 +830,102 @@ export default function Onboarding() {
           </View>
         );
 
-      // Step 5 — Location
+      // Step 5 — Preferred Distance
       case 5:
+        return (
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepTitle}>How far away?</Text>
+            <Text style={styles.stepSubtitle}>
+              Show me people within this distance.
+            </Text>
+            <Text style={styles.distanceValue}>
+              {data.preferredDistance === 100
+                ? "100+ miles"
+                : `${data.preferredDistance} miles`}
+            </Text>
+            <Slider
+              value={data.preferredDistance}
+              onValueChange={(v) =>
+                update({
+                  preferredDistance: Math.round(Array.isArray(v) ? v[0] : v),
+                })
+              }
+              minimumValue={1}
+              maximumValue={100}
+              step={1}
+              minimumTrackTintColor="#2A7DE1"
+              maximumTrackTintColor="#4B5563"
+              containerStyle={styles.sliderContainer}
+              trackStyle={styles.sliderTrack}
+              thumbStyle={styles.sliderThumb}
+            />
+            <View style={styles.distanceLabels}>
+              <Text style={styles.distanceLabelText}>1 mi</Text>
+              <Text style={styles.distanceLabelText}>100+ mi</Text>
+            </View>
+          </View>
+        );
+
+      // Step 6 — Lifestyle
+      case 6: {
+        const lifestyleRow = (
+          icon: keyof typeof MaterialCommunityIcons.glyphMap,
+          question: string,
+          field: keyof typeof data.lifestyle,
+          options: string[],
+          showDivider: boolean,
+        ) => (
+          <View key={field}>
+            <View style={styles.lifestyleQuestion}>
+              <MaterialCommunityIcons name={icon} size={20} color="#6A8FAF" />
+              <Text style={styles.lifestyleQuestionText}>{question}</Text>
+            </View>
+            <View style={styles.lifestyleOptions}>
+              {options.map((opt) => {
+                const selected = data.lifestyle[field] === opt;
+                return (
+                  <TouchableOpacity
+                    key={opt}
+                    style={[
+                      styles.lifestyleOption,
+                      selected && styles.lifestyleOptionSelected,
+                    ]}
+                    onPress={() =>
+                      update({ lifestyle: { ...data.lifestyle, [field]: opt } })
+                    }
+                    activeOpacity={0.75}
+                  >
+                    <Text
+                      style={[
+                        styles.lifestyleOptionText,
+                        selected && styles.lifestyleOptionTextSelected,
+                      ]}
+                    >
+                      {opt}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {showDivider && <View style={styles.lifestyleDivider} />}
+          </View>
+        );
+
+        return (
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepTitle}>What's your lifestyle like?</Text>
+            <Text style={styles.stepSubtitle}>
+              Help others understand how you live.
+            </Text>
+            {lifestyleRow("glass-wine", "Do you drink?", "drink", ["Socially", "Frequently", "Never"], true)}
+            {lifestyleRow("smoking", "Do you smoke?", "smoke", ["Socially", "Frequently", "Never"], true)}
+            {lifestyleRow("dumbbell", "Do you workout?", "workout", ["Often", "Sometimes", "Never"], false)}
+          </View>
+        );
+      }
+
+      // Step 7 — Location
+      case 7:
         return (
           <View style={styles.stepContainer}>
             {locationDenied ? (
@@ -1228,7 +1343,7 @@ export default function Onboarding() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   const isLastStep = step === TOTAL_STEPS - 1;
-  const isLocationStep = step === 5;
+  const isLocationStep = step === 7;
 
   return (
     <LinearGradient
@@ -1362,16 +1477,38 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 16,
   },
+  ageRangeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    marginBottom: 24,
+    marginTop: 8,
+  },
   ageRangeLabel: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: "Montserrat-Bold",
     color: "#fff",
+  },
+  sliderContainer: {
+    marginHorizontal: 4,
+  },
+  distanceValue: {
+    color: "#fff",
+    fontSize: 25,
+    fontFamily: "Montserrat-Bold",
     textAlign: "center",
     marginBottom: 24,
     marginTop: 8,
   },
-  sliderContainer: {
-    marginHorizontal: 4,
+  distanceLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  distanceLabelText: {
+    color: "#6A8FAF",
+    fontSize: 12,
+    fontFamily: "Montserrat-Regular",
   },
   sliderTrack: {
     height: 4,
@@ -1521,6 +1658,49 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 12,
     fontFamily: "Montserrat-Regular",
+  },
+  lifestyleQuestion: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  lifestyleQuestionText: {
+    color: "#EAF6FF",
+    fontSize: 15,
+    fontFamily: "Montserrat-Bold",
+  },
+  lifestyleOptions: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 16,
+  },
+  lifestyleOption: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    alignItems: "center",
+  },
+  lifestyleOptionSelected: {
+    borderColor: "#2A7DE1",
+    backgroundColor: "rgba(42,125,225,0.15)",
+  },
+  lifestyleOptionText: {
+    color: "#6A8FAF",
+    fontSize: 13,
+    fontFamily: "Montserrat-Regular",
+  },
+  lifestyleOptionTextSelected: {
+    color: "#EAF6FF",
+    fontFamily: "Montserrat-Bold",
+  },
+  lifestyleDivider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginBottom: 20,
   },
   livePhotoSubtext: {
     color: "#6A8FAF",

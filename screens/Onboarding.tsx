@@ -386,6 +386,7 @@ type OnboardingData = {
   ageRange: [number, number];
   preferredDistance: number;
   lifestyle: { drink: string; smoke: string; workout: string };
+  career: { school: string; work: string };
   photos: string[];
   prompts: PromptEntry[];
   interests: string[];
@@ -394,7 +395,7 @@ type OnboardingData = {
   locationLng: number | null;
 };
 
-const TOTAL_STEPS = 13;
+const TOTAL_STEPS = 14;
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -445,6 +446,7 @@ export default function Onboarding() {
     ageRange: [18, 35],
     preferredDistance: 25,
     lifestyle: { drink: "", smoke: "", workout: "" },
+    career: { school: "", work: "" },
     photos: [],
     prompts: [],
     interests: [],
@@ -462,7 +464,7 @@ export default function Onboarding() {
   }
 
   function handleContinue() {
-    if (step === 8 && !data.photos[0] && data.photos.some(Boolean)) {
+    if (step === 9 && !data.photos[0] && data.photos.some(Boolean)) {
       setShowPromoteModal(true);
       return;
     }
@@ -708,16 +710,18 @@ export default function Onboarding() {
           data.lifestyle.workout !== ""
         );
       case 7:
-        return true; // location — always can skip
+        return data.career.school !== "" && data.career.work !== "";
       case 8:
-        return data.photos.some(Boolean);
+        return true; // location — always can skip
       case 9:
-        return data.prompts.length >= 2;
+        return data.photos.some(Boolean);
       case 10:
-        return data.interests.length > 0;
+        return data.prompts.length >= 2;
       case 11:
-        return data.datingIntent !== "";
+        return data.interests.length > 0;
       case 12:
+        return data.datingIntent !== "";
+      case 13:
         return true;
       default:
         return true;
@@ -987,8 +991,64 @@ export default function Onboarding() {
         );
       }
 
-      // Step 7 — Location
-      case 7:
+      // Step 7 — Career
+      case 7: {
+        const careerRow = (
+          icon: keyof typeof MaterialCommunityIcons.glyphMap,
+          question: string,
+          field: keyof typeof data.career,
+          options: string[],
+          showDivider: boolean,
+        ) => (
+          <View key={field}>
+            <View style={styles.lifestyleQuestion}>
+              <MaterialCommunityIcons name={icon} size={20} color="#6A8FAF" />
+              <Text style={styles.lifestyleQuestionText}>{question}</Text>
+            </View>
+            <View style={styles.lifestyleOptions}>
+              {options.map((opt) => (
+                <LifestyleOption
+                  key={opt}
+                  opt={opt}
+                  selected={data.career[field] === opt}
+                  onPress={() =>
+                    update({ career: { ...data.career, [field]: opt } })
+                  }
+                />
+              ))}
+            </View>
+            {showDivider && <View style={styles.lifestyleDivider} />}
+          </View>
+        );
+
+        return (
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepTitle}>
+              What do you{"\n"}do with your time?
+            </Text>
+            <Text style={styles.stepSubtitle}>
+              Share a little about your life.
+            </Text>
+            {careerRow(
+              "school",
+              "Are you in school?",
+              "school",
+              ["College", "Grad school", "Trade school"],
+              true,
+            )}
+            {careerRow(
+              "briefcase",
+              "Are you working?",
+              "work",
+              ["Unemployed", "Part-Time", "Full-Time"],
+              false,
+            )}
+          </View>
+        );
+      }
+
+      // Step 8 — Location
+      case 8:
         return (
           <View style={styles.stepContainer}>
             {locationDenied ? (
@@ -1406,7 +1466,7 @@ export default function Onboarding() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   const isLastStep = step === TOTAL_STEPS - 1;
-  const isLocationStep = step === 7;
+  const isLocationStep = step === 8;
 
   return (
     <LinearGradient

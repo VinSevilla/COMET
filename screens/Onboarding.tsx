@@ -1398,39 +1398,21 @@ export default function Onboarding() {
 
             {/* Answered prompts */}
             {data.prompts.map((p, i) => (
-              <View key={i} style={styles.answeredPrompt}>
+              <LinearGradient
+                key={i}
+                colors={["#164271", "#000000"]}
+                style={styles.answeredPrompt}
+              >
                 <Text style={styles.answeredPromptLabel}>{p.prompt}</Text>
                 <Text style={styles.answeredPromptAnswer}>{p.answer}</Text>
                 <TouchableOpacity onPress={() => removePrompt(i)}>
                   <Text style={styles.removeText}>Remove</Text>
                 </TouchableOpacity>
-              </View>
+              </LinearGradient>
             ))}
 
-            {/* Answer input */}
-            {activePrompt && (
-              <View style={styles.promptAnswerBox}>
-                <Text style={styles.activePromptLabel}>{activePrompt}</Text>
-                <TextInput
-                  style={styles.promptInput}
-                  placeholder="Your answer..."
-                  placeholderTextColor="#555"
-                  value={promptAnswer}
-                  onChangeText={setPromptAnswer}
-                  multiline
-                  autoFocus
-                />
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={savePromptAnswer}
-                >
-                  <Text style={styles.primaryButtonText}>Save Answer</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
             {/* Suggested prompts */}
-            {data.prompts.length < 3 && !activePrompt && (
+            {data.prompts.length < 3 && (
               <>
                 <Text style={styles.sectionLabel}>Suggested for you</Text>
                 {(showAllPrompts ? ALL_PROMPTS : suggestedPrompts).map(
@@ -1438,17 +1420,45 @@ export default function Onboarding() {
                     const already = data.prompts.find(
                       (p) => p.prompt === prompt,
                     );
+                    const isActive = activePrompt === prompt;
                     return (
                       <TouchableOpacity
                         key={prompt}
-                        style={[
-                          styles.promptOption,
-                          already && styles.promptOptionUsed,
-                        ]}
-                        onPress={() => !already && selectPrompt(prompt)}
+                        style={already && styles.promptOptionUsed}
+                        onPress={() => !already && !isActive && selectPrompt(prompt)}
                         disabled={!!already}
+                        activeOpacity={isActive ? 1 : 0.7}
                       >
-                        <Text style={styles.promptOptionText}>{prompt}</Text>
+                        <LinearGradient
+                          colors={["#164271", "#000000"]}
+                          style={styles.promptOption}
+                        >
+                          <Text style={styles.promptOptionText}>{prompt}</Text>
+                          {isActive && (
+                            <>
+                              <LinearGradient
+                                colors={["#FFD30D", "#D77600"]}
+                                style={styles.promptInputGradientBorder}
+                              >
+                                <TextInput
+                                  style={styles.promptInputInner}
+                                  placeholder="Enter response here"
+                                  placeholderTextColor="#555"
+                                  value={promptAnswer}
+                                  onChangeText={setPromptAnswer}
+                                  multiline
+                                  autoFocus
+                                />
+                              </LinearGradient>
+                              <TouchableOpacity
+                                style={styles.primaryButton}
+                                onPress={savePromptAnswer}
+                              >
+                                <Text style={styles.primaryButtonText}>Save Answer</Text>
+                              </TouchableOpacity>
+                            </>
+                          )}
+                        </LinearGradient>
                       </TouchableOpacity>
                     );
                   },
@@ -2069,9 +2079,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   answeredPromptLabel: {
-    color: "#2A7DE1",
+    color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Montserrat-Regular",
+    fontFamily: "Montserrat-Bold",
     marginBottom: 4,
   },
   answeredPromptAnswer: {
@@ -2092,10 +2102,25 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   activePromptLabel: {
-    color: "#2A7DE1",
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontFamily: "Montserrat-Bold",
+    marginBottom: 10,
+  },
+  promptInputGradientBorder: {
+    borderRadius: 8,
+    padding: 1.5,
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  promptInputInner: {
+    backgroundColor: "#0a1929",
+    borderRadius: 7,
+    padding: 10,
+    color: "#fff",
     fontSize: 14,
     fontFamily: "Montserrat-Regular",
-    marginBottom: 10,
+    minHeight: 70,
   },
   promptInput: {
     color: "#fff",
@@ -2105,7 +2130,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   promptOption: {
-    backgroundColor: "#1a1a1a",
     borderRadius: 10,
     padding: 14,
     marginBottom: 8,
@@ -2116,7 +2140,7 @@ const styles = StyleSheet.create({
   promptOptionText: {
     color: "#fff",
     fontSize: 15,
-    fontFamily: "Montserrat-Regular",
+    fontFamily: "Montserrat-Bold",
   },
   seeMore: {
     color: "#2A7DE1",

@@ -532,6 +532,7 @@ export default function Onboarding() {
     return () => sub.remove();
   }, [locationDenied]);
   const [promptAnswer, setPromptAnswer] = useState("");
+  const [promptInputHeight, setPromptInputHeight] = useState(40);
 
   const [data, setData] = useState<OnboardingData>({
     name: "",
@@ -702,6 +703,7 @@ export default function Onboarding() {
     }
     setActivePrompt(prompt);
     setPromptAnswer("");
+    setPromptInputHeight(40);
   }
 
   function savePromptAnswer() {
@@ -1400,7 +1402,7 @@ export default function Onboarding() {
             {data.prompts.map((p, i) => (
               <LinearGradient
                 key={i}
-                colors={["#164271", "#000000"]}
+                colors={["#1B3E66", "#122F4D"]}
                 style={styles.answeredPrompt}
               >
                 <Text style={styles.answeredPromptLabel}>{p.prompt}</Text>
@@ -1425,15 +1427,26 @@ export default function Onboarding() {
                       <TouchableOpacity
                         key={prompt}
                         style={already && styles.promptOptionUsed}
-                        onPress={() => !already && !isActive && selectPrompt(prompt)}
+                        onPress={() =>
+                          !already && !isActive && selectPrompt(prompt)
+                        }
                         disabled={!!already}
                         activeOpacity={isActive ? 1 : 0.7}
                       >
                         <LinearGradient
-                          colors={["#164271", "#000000"]}
+                          colors={["#1B3E66", "#122F4D"]}
                           style={styles.promptOption}
                         >
                           <Text style={styles.promptOptionText}>{prompt}</Text>
+                          {isActive && (
+                            <TouchableOpacity
+                              style={styles.promptDismiss}
+                              onPress={() => setActivePrompt(null)}
+                              hitSlop={{ top: 8, left: 8, bottom: 8, right: 8 }}
+                            >
+                              <Text style={styles.promptDismissText}>✕</Text>
+                            </TouchableOpacity>
+                          )}
                           {isActive && (
                             <>
                               <LinearGradient
@@ -1441,20 +1454,31 @@ export default function Onboarding() {
                                 style={styles.promptInputGradientBorder}
                               >
                                 <TextInput
-                                  style={styles.promptInputInner}
+                                  style={[
+                                    styles.promptInputInner,
+                                    { height: promptInputHeight },
+                                  ]}
                                   placeholder="Enter response here"
-                                  placeholderTextColor="#555"
+                                  placeholderTextColor="rgba(255,255,255,0.5)"
                                   value={promptAnswer}
                                   onChangeText={setPromptAnswer}
+                                  onContentSizeChange={(e) =>
+                                    setPromptInputHeight(
+                                      Math.max(
+                                        40,
+                                        e.nativeEvent.contentSize.height,
+                                      ),
+                                    )
+                                  }
                                   multiline
+                                  maxLength={100}
                                   autoFocus
                                 />
                               </LinearGradient>
-                              <TouchableOpacity
-                                style={styles.primaryButton}
-                                onPress={savePromptAnswer}
-                              >
-                                <Text style={styles.primaryButtonText}>Save Answer</Text>
+                              <TouchableOpacity onPress={savePromptAnswer}>
+                                <Text style={styles.promptSaveText}>
+                                  Save answer
+                                </Text>
                               </TouchableOpacity>
                             </>
                           )}
@@ -2073,10 +2097,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   answeredPrompt: {
-    backgroundColor: "#1a1a1a",
     borderRadius: 10,
     padding: 14,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
   },
   answeredPromptLabel: {
     color: "#FFFFFF",
@@ -2107,6 +2132,23 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Bold",
     marginBottom: 10,
   },
+  promptDismiss: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1,
+  },
+  promptDismissText: {
+    color: "rgba(255,255,255,0.45)",
+    fontSize: 12,
+  },
+  promptSaveText: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 12,
+    fontFamily: "Montserrat-Regular",
+    textAlign: "center",
+    marginTop: 8,
+  },
   promptInputGradientBorder: {
     borderRadius: 8,
     padding: 1.5,
@@ -2114,13 +2156,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   promptInputInner: {
-    backgroundColor: "#0a1929",
+    backgroundColor: "#0F2A44",
     borderRadius: 7,
     padding: 10,
     color: "#fff",
     fontSize: 14,
     fontFamily: "Montserrat-Regular",
-    minHeight: 70,
   },
   promptInput: {
     color: "#fff",
@@ -2133,6 +2174,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 14,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
   },
   promptOptionUsed: {
     opacity: 0.3,

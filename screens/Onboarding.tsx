@@ -482,11 +482,7 @@ function LifestyleOption({
 
   return (
     <TouchableOpacity
-      style={[
-        styles.lifestyleOptionWrapper,
-        selected && styles.lifestyleOptionSelectedGlow,
-        wrapStyle,
-      ]}
+      style={[styles.lifestyleOptionWrapper, wrapStyle]}
       onPress={onPress}
       activeOpacity={0.75}
     >

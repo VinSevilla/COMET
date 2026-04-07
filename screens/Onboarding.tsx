@@ -561,6 +561,7 @@ export default function Onboarding() {
   const sheetAnim = useRef(new Animated.Value(300)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const stepOpacity = useRef(new Animated.Value(1)).current;
+  const seeMoreOpacity = useRef(new Animated.Value(0.75)).current;
   const stepTranslateY = useRef(new Animated.Value(0)).current;
   const [suggestedPrompts] = useState<string[]>(getSuggestedPrompts());
   const [showAllPrompts, setShowAllPrompts] = useState(false);
@@ -1475,17 +1476,14 @@ export default function Onboarding() {
 
             {/* Answered prompts */}
             {data.prompts.map((p, i) => (
-              <LinearGradient
-                key={i}
-                colors={["#1B3E66", "#122F4D"]}
-                style={styles.answeredPrompt}
-              >
+              <View key={i} style={styles.answeredPrompt}>
+                <Text style={styles.answeredBadge}>✓ Answered</Text>
                 <Text style={styles.answeredPromptLabel}>{p.prompt}</Text>
                 <Text style={styles.answeredPromptAnswer}>{p.answer}</Text>
                 <TouchableOpacity onPress={() => removePrompt(i)}>
                   <Text style={styles.removeText}>Remove</Text>
                 </TouchableOpacity>
-              </LinearGradient>
+              </View>
             ))}
 
             {/* Suggested prompts */}
@@ -1506,11 +1504,13 @@ export default function Onboarding() {
                           !already && !isActive && selectPrompt(prompt)
                         }
                         disabled={!!already}
-                        activeOpacity={isActive ? 1 : 0.7}
+                        activeOpacity={isActive ? 1 : 0.75}
                       >
-                        <LinearGradient
-                          colors={["#1B3E66", "#122F4D"]}
-                          style={styles.promptOption}
+                        <View
+                          style={[
+                            styles.promptOption,
+                            isActive && styles.promptOptionActive,
+                          ]}
                         >
                           <Text style={styles.promptOptionText}>{prompt}</Text>
                           {isActive && (
@@ -1524,10 +1524,7 @@ export default function Onboarding() {
                           )}
                           {isActive && (
                             <>
-                              <LinearGradient
-                                colors={["#FFD30D", "#D77600"]}
-                                style={styles.promptInputGradientBorder}
-                              >
+                              <View style={styles.promptInputContainer}>
                                 <TextInput
                                   ref={promptInputRef}
                                   style={[
@@ -1535,7 +1532,7 @@ export default function Onboarding() {
                                     { height: promptInputHeight },
                                   ]}
                                   placeholder="Enter response here"
-                                  placeholderTextColor="rgba(255,255,255,0.5)"
+                                  placeholderTextColor="rgba(234,246,255,0.35)"
                                   value={promptAnswer}
                                   maxLength={100}
                                   onKeyPress={({ nativeEvent }) => {
@@ -1575,11 +1572,11 @@ export default function Onboarding() {
                                   multiline
                                   autoFocus
                                 />
-                              </LinearGradient>
+                              </View>
                               <View style={styles.promptFooter}>
                                 {promptAnswer.length >= 100 ? (
                                   <Text style={styles.promptCharCount}>
-                                    Max characters reached
+                                    Character limit reached
                                   </Text>
                                 ) : (
                                   <View />
@@ -1592,15 +1589,34 @@ export default function Onboarding() {
                               </View>
                             </>
                           )}
-                        </LinearGradient>
+                        </View>
                       </TouchableOpacity>
                     );
                   },
                 )}
                 {!showAllPrompts && (
-                  <TouchableOpacity onPress={() => setShowAllPrompts(true)}>
-                    <Text style={styles.seeMore}>See more prompts</Text>
-                  </TouchableOpacity>
+                  <Animated.View style={{ opacity: seeMoreOpacity }}>
+                    <TouchableOpacity
+                      onPress={() => setShowAllPrompts(true)}
+                      onPressIn={() =>
+                        Animated.timing(seeMoreOpacity, {
+                          toValue: 1,
+                          duration: 120,
+                          useNativeDriver: true,
+                        }).start()
+                      }
+                      onPressOut={() =>
+                        Animated.timing(seeMoreOpacity, {
+                          toValue: 0.75,
+                          duration: 200,
+                          useNativeDriver: true,
+                        }).start()
+                      }
+                      activeOpacity={1}
+                    >
+                      <Text style={styles.seeMore}>See more prompts</Text>
+                    </TouchableOpacity>
+                  </Animated.View>
                 )}
               </>
             )}
@@ -2219,26 +2235,39 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   answeredPrompt: {
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 14,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+    borderColor: "rgba(60,246,213,0.25)",
+    backgroundColor: "rgba(42,125,225,0.07)",
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  answeredBadge: {
+    color: "rgba(60,246,213,0.45)",
+    fontSize: 10,
+    fontFamily: "Montserrat-Bold",
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   answeredPromptLabel: {
-    color: "#FFFFFF",
+    color: "#EAF6FF",
     fontSize: 12,
     fontFamily: "Montserrat-Bold",
     marginBottom: 4,
   },
   answeredPromptAnswer: {
-    color: "#fff",
+    color: "rgba(234,246,255,0.85)",
     fontSize: 15,
     fontFamily: "Montserrat-Regular",
     marginBottom: 8,
   },
   removeText: {
-    color: "#e85d4a",
+    color: "rgba(234,246,255,0.5)",
     fontSize: 13,
     fontFamily: "Montserrat-Regular",
   },
@@ -2267,32 +2296,34 @@ const styles = StyleSheet.create({
   promptFooter: {
     flexDirection: "column",
     alignItems: "flex-end",
-    marginTop: 6,
-    gap: 4,
+    marginTop: 10,
+    gap: 6,
   },
   promptCharCount: {
-    color: "#FFB347",
+    color: "rgba(234,246,255,0.5)",
     fontSize: 12,
     fontFamily: "Montserrat-Regular",
   },
   promptSaveText: {
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 12,
-    fontFamily: "Montserrat-Regular",
+    color: "#3CF6D5",
+    fontSize: 13,
+    fontFamily: "Montserrat-Bold",
     textAlign: "center",
-    marginTop: 8,
+    marginTop: 10,
+    opacity: 0.78,
   },
-  promptInputGradientBorder: {
+  promptInputContainer: {
     borderRadius: 8,
-    padding: 1.5,
-    marginTop: 12,
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.02)",
+    marginTop: 14,
+    marginBottom: 4,
   },
   promptInputInner: {
-    backgroundColor: "#0F2A44",
     borderRadius: 7,
     padding: 10,
-    color: "#fff",
+    color: "#EAF6FF",
     fontSize: 14,
     fontFamily: "Montserrat-Regular",
   },
@@ -2304,11 +2335,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   promptOption: {
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+    borderColor: "rgba(255,255,255,0.05)",
+    backgroundColor: "rgba(15,42,68,0.6)",
+  },
+  promptOptionActive: {
+    borderWidth: 1,
+    borderColor: "rgba(60,246,213,0.35)",
+    backgroundColor: "rgba(42,125,225,0.12)",
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 7,
+    elevation: 3,
   },
   promptOptionUsed: {
     opacity: 0.3,
@@ -2319,7 +2361,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Bold",
   },
   seeMore: {
-    color: "#2A7DE1",
+    color: "#3CF6D5",
     fontSize: 14,
     fontFamily: "Montserrat-Regular",
     textAlign: "center",

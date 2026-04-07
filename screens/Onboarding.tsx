@@ -1708,7 +1708,7 @@ export default function Onboarding() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={["#2A7DE1", "#3CF6D5"]}
+            colors={["#2A7DE1", "#4FA3FF"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={StyleSheet.absoluteFill}

@@ -1,20 +1,95 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * COMET Design System — tokens, typography, spacing, and glow presets.
+ * Import from here instead of hardcoding values in components.
  */
 
-import { Platform } from 'react-native';
+import { Platform, TextStyle, ViewStyle } from 'react-native';
+
+// ─── Palette ─────────────────────────────────────────────────────────────────
+
+export const Palette = {
+  deepSpaceBlue: '#0F2A44',
+  electricBlue: '#2A7DE1',
+  cosmicTeal: '#3CF6D5',
+  cometOrange: '#FFB347',
+  navyDark: '#1A3A6B',
+  textPrimary: '#EAF6FF',
+  textSecondary: '#6A8FAF',
+  glass: 'rgba(15,42,68,0.6)',
+  glassBorder: 'rgba(255,255,255,0.1)',
+};
+
+// ─── Typography ──────────────────────────────────────────────────────────────
+
+export const Typography: Record<string, TextStyle> = {
+  h1: {
+    fontSize: 32,
+    fontFamily: 'Montserrat-Bold',
+    letterSpacing: 1.5,
+    color: Palette.textPrimary,
+  },
+  h2: {
+    fontSize: 26,
+    fontFamily: 'Montserrat-Bold',
+    letterSpacing: 1,
+    color: Palette.textPrimary,
+  },
+  button: {
+    fontSize: 16,
+    fontFamily: 'Montserrat-Bold',
+    letterSpacing: 1.2,
+    color: Palette.textPrimary,
+  },
+  body: {
+    fontSize: 15,
+    fontFamily: 'Montserrat-Regular',
+    color: Palette.textPrimary,
+  },
+  caption: {
+    fontSize: 12,
+    fontFamily: 'Montserrat-Regular',
+    color: Palette.textSecondary,
+  },
+};
+
+// ─── Spacing ─────────────────────────────────────────────────────────────────
+
+export const Spacing = {
+  xs: 8,
+  sm: 12,
+  md: 16,
+  lg: 24,
+  xl: 32,
+};
+
+// ─── Glow Presets ────────────────────────────────────────────────────────────
+
+export const Glow: Record<'blue' | 'teal' | 'orange', ViewStyle> = {
+  blue: {
+    shadowColor: '#2A7DE1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  teal: {
+    shadowColor: '#3CF6D5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  orange: {
+    shadowColor: '#FFB347',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+};
 
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
-
-export const WelcomeColors = {
-  loginButton: '#2A7DE1',
-  signupButton: '#0F2A44',
-  signupBorder: '#FFB347',
-  loginBorder: '#2A7DE1',
-  buttonText: '#EAF6FF',
-};
 
 export const Colors = {
   light: {

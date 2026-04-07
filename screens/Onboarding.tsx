@@ -14,13 +14,16 @@ import {
   Animated,
   AppState,
   Image,
+  LayoutAnimation,
   Linking,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  UIManager,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -542,6 +545,18 @@ const TOTAL_STEPS = 14;
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
+// Enable LayoutAnimation on Android
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const PROMPT_EXPAND_ANIMATION = {
+  duration: 280,
+  create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+  update: { type: LayoutAnimation.Types.easeInEaseOut },
+  delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+};
+
 export default function Onboarding() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -773,6 +788,7 @@ export default function Onboarding() {
       Alert.alert("Maximum reached", "You can choose up to 3 prompts.");
       return;
     }
+    LayoutAnimation.configureNext(PROMPT_EXPAND_ANIMATION);
     setActivePrompt(prompt);
     setPromptAnswer("");
     setPromptInputHeight(40);
@@ -780,6 +796,7 @@ export default function Onboarding() {
 
   function savePromptAnswer() {
     if (!activePrompt || !promptAnswer.trim()) return;
+    LayoutAnimation.configureNext(PROMPT_EXPAND_ANIMATION);
     update({
       prompts: [
         ...data.prompts,
@@ -1292,6 +1309,11 @@ export default function Onboarding() {
                       pointerEvents="none"
                     />
                   )}
+                  {livePhotoUris.includes(data.photos[0]) && (
+                    <View style={styles.verifiedBadge} pointerEvents="none">
+                      <Text style={styles.verifiedBadgeText}>✓ Verified</Text>
+                    </View>
+                  )}
                   <TouchableOpacity
                     style={styles.removePhoto}
                     onPress={() => removePhoto(0)}
@@ -1381,6 +1403,11 @@ export default function Onboarding() {
                           pointerEvents="none"
                         />
                       )}
+                      {livePhotoUris.includes(data.photos[slot]) && (
+                        <View style={styles.verifiedBadge} pointerEvents="none">
+                          <Text style={styles.verifiedBadgeText}>✓</Text>
+                        </View>
+                      )}
                       <TouchableOpacity
                         style={styles.removePhoto}
                         onPress={() => removePhoto(slot)}
@@ -1439,10 +1466,12 @@ export default function Onboarding() {
                     activeOpacity={0.7}
                     onPress={() => takeLivePhoto(pendingSlot)}
                   >
-                    <Text style={styles.photoSheetOptionText}>
-                      Take live photo{" "}
-                      <Text style={styles.photoSheetVerified}>(verified)</Text>
-                    </Text>
+                    <View style={{ alignItems: "center" }}>
+                      <Text style={styles.photoSheetOptionText}>
+                        Take live photo
+                      </Text>
+                      <Text style={styles.photoSheetVerified}>(Verified)</Text>
+                    </View>
                   </TouchableOpacity>
                   <View style={styles.photoSheetDivider} />
                   <TouchableOpacity
@@ -1512,7 +1541,10 @@ export default function Onboarding() {
                           {isActive && (
                             <TouchableOpacity
                               style={styles.promptDismiss}
-                              onPress={() => setActivePrompt(null)}
+                              onPress={() => {
+                                LayoutAnimation.configureNext(PROMPT_EXPAND_ANIMATION);
+                                setActivePrompt(null);
+                              }}
                               hitSlop={{ top: 8, left: 8, bottom: 8, right: 8 }}
                             >
                               <Text style={styles.promptDismissText}>✕</Text>
@@ -1966,10 +1998,10 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: "rgba(255,255,255,0.03)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    borderStyle: "dashed",
+    borderColor: "rgba(255,255,255,0.08)",
+    borderStyle: "solid",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
@@ -1991,10 +2023,10 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: "rgba(255,255,255,0.03)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    borderStyle: "dashed",
+    borderColor: "rgba(255,255,255,0.08)",
+    borderStyle: "solid",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
@@ -2008,18 +2040,18 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     shadowColor: "#3CF6D5",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   addPhotoPlus: {
-    color: "#fff",
+    color: "#EAF6FF",
     fontSize: 24,
     fontFamily: "Montserrat-Regular",
     lineHeight: 28,
   },
   addPhotoLabel: {
-    color: "#fff",
+    color: "rgba(234,246,255,0.7)",
     fontSize: 11,
     fontFamily: "Montserrat-Regular",
     marginTop: 2,
@@ -2028,12 +2060,30 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 6,
     right: 6,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     borderRadius: 12,
     width: 24,
     height: 24,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  verifiedBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "rgba(60,246,213,0.13)",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: "rgba(60,246,213,0.35)",
+  },
+  verifiedBadgeText: {
+    color: "#3CF6D5",
+    fontSize: 10,
+    fontFamily: "Montserrat-Bold",
   },
   removePhotoText: {
     color: "#fff",
@@ -2123,11 +2173,13 @@ const styles = StyleSheet.create({
   photoSheet: {
     marginHorizontal: 16,
     marginBottom: 40,
-    backgroundColor: "#0d1f33",
+    backgroundColor: "rgba(15,42,68,0.95)",
     borderRadius: 18,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "rgba(255,255,255,0.08)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.08)",
   },
   photoSheetCancel: {
     color: "#6A8FAF",
@@ -2149,7 +2201,7 @@ const styles = StyleSheet.create({
   },
   photoSheetVerified: {
     color: "#3CF6D5",
-    fontSize: 15,
+    fontSize: 12,
     fontFamily: "Montserrat-Regular",
   },
   promoteBanner: {

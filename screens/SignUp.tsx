@@ -2,9 +2,8 @@ import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   StyleSheet,
   Text,
@@ -13,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/Button";
 
 export default function SignUp() {
   const router = useRouter();
@@ -24,6 +24,11 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
+  const [focusedField, setFocusedField] = useState<
+    "email" | "password" | "confirm" | null
+  >(null);
 
   async function handleSignUp() {
     if (!email || !password || !confirmPassword) {
@@ -50,7 +55,6 @@ export default function SignUp() {
       return;
     }
 
-    // Account created — send them to onboarding to build their profile
     router.replace("/(auth)/onboarding");
   }
 
@@ -67,76 +71,86 @@ export default function SignUp() {
         <Text style={styles.title}>Welcome to COMET!</Text>
 
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            focusedField === "email" && styles.inputFocused,
+          ]}
           placeholder="Email"
-          placeholderTextColor="#888"
+          placeholderTextColor="rgba(234,246,255,0.35)"
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
+          onFocus={() => setFocusedField("email")}
+          onBlur={() => setFocusedField(null)}
         />
 
-        <View style={styles.inputWrapper}>
+        <View
+          style={[
+            styles.inputWrapper,
+            focusedField === "password" && styles.inputFocused,
+          ]}
+        >
           <TextInput
+            ref={passwordRef}
             style={styles.inputWithIcon}
             placeholder="Password"
-            placeholderTextColor="#888"
+            placeholderTextColor="rgba(234,246,255,0.35)"
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
+            onFocus={() => setFocusedField("password")}
+            onBlur={() => setFocusedField(null)}
           />
           <TouchableOpacity
             style={styles.eyeButton}
-            onPress={() => setShowPassword((v) => !v)}
+            onPress={() => { setShowPassword((v) => !v); passwordRef.current?.focus(); }}
           >
             <Ionicons
               name={showPassword ? "eye" : "eye-off"}
               size={20}
-              color="#555"
+              color="rgba(234,246,255,0.4)"
             />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.inputWrapper}>
+        <View
+          style={[
+            styles.inputWrapper,
+            focusedField === "confirm" && styles.inputFocused,
+          ]}
+        >
           <TextInput
+            ref={confirmPasswordRef}
             style={styles.inputWithIcon}
             placeholder="Confirm password"
-            placeholderTextColor="#888"
+            placeholderTextColor="rgba(234,246,255,0.35)"
             secureTextEntry={!showConfirmPassword}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
+            onFocus={() => setFocusedField("confirm")}
+            onBlur={() => setFocusedField(null)}
           />
           <TouchableOpacity
             style={styles.eyeButton}
-            onPress={() => setShowConfirmPassword((v) => !v)}
+            onPress={() => { setShowConfirmPassword((v) => !v); confirmPasswordRef.current?.focus(); }}
           >
             <Ionicons
               name={showConfirmPassword ? "eye" : "eye-off"}
               size={20}
-              color="#555"
+              color="rgba(234,246,255,0.4)"
             />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+        <Button
+          variant="primary"
+          label="Create an Account"
           onPress={handleSignUp}
+          loading={loading}
           disabled={loading}
-        >
-          <LinearGradient
-            colors={["rgba(0,0,0,0.40)", "rgba(0,0,0,0)", "rgba(0,0,0,0.40)"]}
-            locations={[0, 0.5, 1]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Create an Account</Text>
-          )}
-        </TouchableOpacity>
+          style={{ marginBottom: 20 }}
+        />
 
         <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
           <Text style={styles.switchText}>
@@ -185,62 +199,63 @@ const styles = StyleSheet.create({
   backArrow: {
     fontSize: 24,
     color: "#fff",
+    fontFamily: "Montserrat-Regular",
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
+    fontFamily: "Montserrat-Bold",
+    color: "#EAF6FF",
     marginBottom: 32,
+    letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 10,
+    backgroundColor: "rgba(15,42,68,0.5)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
     padding: 14,
-    color: "#fff",
+    color: "#EAF6FF",
     fontSize: 16,
+    fontFamily: "Montserrat-Regular",
     marginBottom: 16,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1a1a1a",
-    borderRadius: 10,
+    backgroundColor: "rgba(15,42,68,0.5)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
     marginBottom: 16,
+  },
+  inputFocused: {
+    borderColor: "rgba(42,125,225,0.5)",
+    shadowColor: "#2A7DE1",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   inputWithIcon: {
     flex: 1,
     padding: 14,
-    color: "#fff",
+    color: "#EAF6FF",
     fontSize: 16,
+    fontFamily: "Montserrat-Regular",
   },
   eyeButton: {
     paddingHorizontal: 14,
     paddingVertical: 14,
   },
-  button: {
-    backgroundColor: "#2A7DE1",
-    borderRadius: 30,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginBottom: 20,
-    overflow: "hidden",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
   switchText: {
-    color: "#888",
+    color: "#6A8FAF",
     textAlign: "center",
     fontSize: 14,
+    fontFamily: "Montserrat-Regular",
   },
   switchLink: {
     color: "#2A7DE1",
-    fontWeight: "bold",
+    fontFamily: "Montserrat-Bold",
   },
   legalText: {
     position: "absolute",
@@ -251,6 +266,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 10,
     lineHeight: 14,
+    fontFamily: "Montserrat-Regular",
   },
   legalLink: {
     color: "#2A7DE1",

@@ -1,5 +1,6 @@
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/Button";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Slider } from "@miblanchard/react-native-slider";
 import * as Haptics from "expo-haptics";
@@ -9,7 +10,6 @@ import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   AppState,
@@ -1698,37 +1698,14 @@ export default function Onboarding() {
 
       {/* Next / Finish button — hidden on location step (it handles its own nav) */}
       {!isLocationStep && (
-        <TouchableOpacity
-          style={[
-            styles.nextButton,
-            !canAdvance() && styles.nextButtonDisabled,
-          ]}
+        <Button
+          variant="primary"
+          label={isLastStep ? "Let's go" : "Continue"}
           onPress={isLastStep ? saveProfile : handleContinue}
+          loading={saving}
           disabled={!canAdvance() || saving}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={["#2A7DE1", "#4FA3FF"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={["rgba(0,0,0,0.25)", "rgba(0,0,0,0)", "rgba(0,0,0,0.25)"]}
-            locations={[0, 0.5, 1]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-          {saving ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.nextButtonText}>
-              {isLastStep ? "Let's go" : "Continue"}
-            </Text>
-          )}
-        </TouchableOpacity>
+          style={{ marginTop: 16 }}
+        />
       )}
     </LinearGradient>
   );
@@ -1742,15 +1719,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   progressBar: {
-    height: 3,
-    backgroundColor: "#1a1a1a",
+    height: 2,
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderRadius: 2,
     marginTop: 12,
     marginBottom: 24,
   },
   progressFill: {
-    height: 3,
+    height: 2,
     borderRadius: 2,
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 4,
+    elevation: 3,
   },
   backButton: {
     marginBottom: 16,
@@ -1790,15 +1772,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   input: {
-    backgroundColor: "#0d1f33",
-    borderRadius: 10,
+    backgroundColor: "rgba(15,42,68,0.5)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
     padding: 14,
     color: "#EAF6FF",
     fontSize: 16,
     fontFamily: "Montserrat-Regular",
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "rgba(42,125,225,0.2)",
   },
   agePreview: {
     color: "#888",
@@ -2327,25 +2309,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Montserrat-Regular",
     lineHeight: 26,
-  },
-  nextButton: {
-    borderRadius: 30,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 16,
-    overflow: "hidden",
-    shadowColor: "#3CF6D5",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  nextButtonDisabled: {
-    opacity: 0.3,
-  },
-  nextButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Montserrat-Regular",
   },
 });

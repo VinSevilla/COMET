@@ -3,7 +3,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/Button";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -20,6 +20,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
 
   async function handleReset() {
     if (!email) {
@@ -59,16 +60,18 @@ export default function ForgotPassword() {
             <Text style={styles.hintText}>
               Didn't receive it? Check your spam folder or try again.
             </Text>
-            <TouchableOpacity
-              style={styles.button}
+            <Button
+              variant="primary"
+              label="Try a different email"
               onPress={() => {
                 setEmail("");
                 setSent(false);
               }}
+            />
+            <TouchableOpacity
+              style={styles.backToLogin}
+              onPress={() => router.replace("/(auth)/login")}
             >
-              <Text style={styles.buttonText}>Try a different email</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
               <Text style={styles.switchText}>
                 Back to <Text style={styles.switchLink}>Log In</Text>
               </Text>
@@ -83,26 +86,25 @@ export default function ForgotPassword() {
             </Text>
 
             <TextInput
-              style={styles.input}
+              style={[styles.input, emailFocused && styles.inputFocused]}
               placeholder="Email"
-              placeholderTextColor="#888"
+              placeholderTextColor="rgba(234,246,255,0.35)"
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
             />
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+            <Button
+              variant="primary"
+              label="Send Reset Link"
               onPress={handleReset}
+              loading={loading}
               disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Send Reset Link</Text>
-              )}
-            </TouchableOpacity>
+              style={{ marginBottom: 20 }}
+            />
 
             <TouchableOpacity onPress={() => router.back()}>
               <Text style={styles.switchText}>
@@ -138,58 +140,63 @@ const styles = StyleSheet.create({
   backArrow: {
     fontSize: 24,
     color: "#fff",
+    fontFamily: "Montserrat-Regular",
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
+    fontFamily: "Montserrat-Bold",
+    color: "#EAF6FF",
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    color: "#888",
+    color: "#6A8FAF",
     fontSize: 14,
+    fontFamily: "Montserrat-Regular",
     lineHeight: 20,
     marginBottom: 24,
   },
   emailHighlight: {
-    color: "#fff",
-    fontWeight: "600",
+    color: "#EAF6FF",
+    fontFamily: "Montserrat-Bold",
   },
   hintText: {
     color: "#555",
     fontSize: 13,
+    fontFamily: "Montserrat-Regular",
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 10,
+    backgroundColor: "rgba(15,42,68,0.5)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
     padding: 14,
-    color: "#fff",
+    color: "#EAF6FF",
     fontSize: 16,
+    fontFamily: "Montserrat-Regular",
     marginBottom: 16,
   },
-  button: {
-    backgroundColor: "#2A7DE1",
-    borderRadius: 10,
-    padding: 16,
+  inputFocused: {
+    borderColor: "rgba(42,125,225,0.5)",
+    shadowColor: "#2A7DE1",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  backToLogin: {
     alignItems: "center",
-    marginBottom: 20,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+    paddingVertical: 8,
   },
   switchText: {
-    color: "#888",
+    color: "#6A8FAF",
     textAlign: "center",
     fontSize: 14,
+    fontFamily: "Montserrat-Regular",
   },
   switchLink: {
     color: "#2A7DE1",
-    fontWeight: "bold",
+    fontFamily: "Montserrat-Bold",
   },
 });

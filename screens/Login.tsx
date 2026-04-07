@@ -4,7 +4,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   StyleSheet,
   Text,
@@ -13,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/Button";
 
 export default function Login() {
   const router = useRouter();
@@ -22,6 +22,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(null);
 
   async function handleLogin() {
     if (!email || !password) {
@@ -30,17 +31,12 @@ export default function Login() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
 
     if (error) {
       Alert.alert("Login failed", error.message);
     }
-    // On success, AuthContext detects the new session and index.tsx
-    // automatically redirects to /(tabs) — no manual navigation needed.
   }
 
   return (
@@ -56,23 +52,32 @@ export default function Login() {
         <Text style={styles.title}>Welcome back!</Text>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, focusedField === "email" && styles.inputFocused]}
           placeholder="Email"
-          placeholderTextColor="#888"
+          placeholderTextColor="rgba(234,246,255,0.35)"
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
+          onFocus={() => setFocusedField("email")}
+          onBlur={() => setFocusedField(null)}
         />
 
-        <View style={styles.inputWrapper}>
+        <View
+          style={[
+            styles.inputWrapper,
+            focusedField === "password" && styles.inputFocused,
+          ]}
+        >
           <TextInput
             style={styles.inputWithIcon}
             placeholder="Password"
-            placeholderTextColor="#888"
+            placeholderTextColor="rgba(234,246,255,0.35)"
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
+            onFocus={() => setFocusedField("password")}
+            onBlur={() => setFocusedField(null)}
           />
           <TouchableOpacity
             style={styles.eyeButton}
@@ -81,7 +86,7 @@ export default function Login() {
             <Ionicons
               name={showPassword ? "eye" : "eye-off"}
               size={20}
-              color="#555"
+              color="rgba(234,246,255,0.4)"
             />
           </TouchableOpacity>
         </View>
@@ -93,25 +98,14 @@ export default function Login() {
           <Text style={styles.forgotPasswordText}>Forgot password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+        <Button
+          variant="primary"
+          label="Log In"
           onPress={handleLogin}
+          loading={loading}
           disabled={loading}
-        >
-          <LinearGradient
-            colors={["rgba(0,0,0,0.40)", "rgba(0,0,0,0)", "rgba(0,0,0,0.40)"]}
-            locations={[0, 0.5, 1]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Log In</Text>
-          )}
-        </TouchableOpacity>
+          style={{ marginBottom: 20 }}
+        />
 
         <TouchableOpacity onPress={() => router.replace("/(auth)/signup")}>
           <Text style={styles.switchText}>
@@ -123,17 +117,11 @@ export default function Login() {
 
       <Text style={styles.legalText}>
         By continuing, you agree to COMET's{" "}
-        <Text
-          style={styles.legalLink}
-          onPress={() => router.push("/(auth)/terms")}
-        >
+        <Text style={styles.legalLink} onPress={() => router.push("/(auth)/terms")}>
           Terms of Service
         </Text>{" "}
         and acknowledge that you have read our{" "}
-        <Text
-          style={styles.legalLink}
-          onPress={() => router.push("/(auth)/privacy")}
-        >
+        <Text style={styles.legalLink} onPress={() => router.push("/(auth)/privacy")}>
           Privacy Policy
         </Text>{" "}
         to learn how we collect and use your data.
@@ -160,62 +148,53 @@ const styles = StyleSheet.create({
   backArrow: {
     fontSize: 24,
     color: "#fff",
+    fontFamily: "Montserrat-Regular",
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
+    fontFamily: "Montserrat-Bold",
+    color: "#EAF6FF",
     marginBottom: 32,
+    letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 10,
+    backgroundColor: "rgba(15,42,68,0.5)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
     padding: 14,
-    color: "#fff",
+    color: "#EAF6FF",
     fontSize: 16,
+    fontFamily: "Montserrat-Regular",
     marginBottom: 16,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1a1a1a",
-    borderRadius: 10,
+    backgroundColor: "rgba(15,42,68,0.5)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
     marginBottom: 16,
+  },
+  inputFocused: {
+    borderColor: "rgba(42,125,225,0.5)",
+    shadowColor: "#2A7DE1",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   inputWithIcon: {
     flex: 1,
     padding: 14,
-    color: "#fff",
+    color: "#EAF6FF",
     fontSize: 16,
+    fontFamily: "Montserrat-Regular",
   },
   eyeButton: {
     paddingHorizontal: 14,
     paddingVertical: 14,
-  },
-  button: {
-    backgroundColor: "#2A7DE1",
-    borderRadius: 30,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginBottom: 20,
-    overflow: "hidden",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  switchText: {
-    color: "#888",
-    textAlign: "center",
-    fontSize: 14,
-  },
-  switchLink: {
-    color: "#2A7DE1",
-    fontWeight: "bold",
   },
   forgotPasswordButton: {
     alignSelf: "flex-end",
@@ -225,7 +204,17 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     color: "#2A7DE1",
     fontSize: 14,
-    fontWeight: "500",
+    fontFamily: "Montserrat-Regular",
+  },
+  switchText: {
+    color: "#6A8FAF",
+    textAlign: "center",
+    fontSize: 14,
+    fontFamily: "Montserrat-Regular",
+  },
+  switchLink: {
+    color: "#2A7DE1",
+    fontFamily: "Montserrat-Bold",
   },
   legalText: {
     position: "absolute",
@@ -236,6 +225,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 10,
     lineHeight: 14,
+    fontFamily: "Montserrat-Regular",
   },
   legalLink: {
     color: "#2A7DE1",

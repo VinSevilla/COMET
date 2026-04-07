@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   StyleSheet,
   Text,
@@ -18,14 +19,25 @@ interface ButtonProps {
   onPress: () => void;
   variant?: ButtonVariant;
   style?: ViewStyle;
+  loading?: boolean;
+  disabled?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function Button({ label, onPress, variant = 'primary', style }: ButtonProps) {
+export function Button({
+  label,
+  onPress,
+  variant = 'primary',
+  style,
+  loading = false,
+  disabled = false,
+}: ButtonProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const isDisabled = disabled || loading;
 
   function onPressIn() {
+    if (isDisabled) return;
     Animated.spring(scale, {
       toValue: 0.96,
       useNativeDriver: true,
@@ -36,6 +48,7 @@ export function Button({ label, onPress, variant = 'primary', style }: ButtonPro
   }
 
   function onPressOut() {
+    if (isDisabled) return;
     Animated.spring(scale, {
       toValue: 1,
       useNativeDriver: true,
@@ -50,6 +63,8 @@ export function Button({ label, onPress, variant = 'primary', style }: ButtonPro
       style={[
         styles.outer,
         glowForVariant(variant),
+        isDisabled && styles.disabled,
+        { transform: [{ scale }] },
         style,
       ]}
     >
@@ -58,18 +73,19 @@ export function Button({ label, onPress, variant = 'primary', style }: ButtonPro
         onPressIn={onPressIn}
         onPressOut={onPressOut}
         activeOpacity={1}
+        disabled={isDisabled}
         style={[styles.base, variantContainerStyle(variant)]}
       >
         {variant === 'primary' && (
           <>
-            {/* Base cosmic trail gradient */}
+            {/* Electric Blue → Cosmic Teal base gradient */}
             <LinearGradient
-              colors={['#1A3A6B', '#3CF6D5']}
+              colors={['#2A7DE1', '#3CF6D5']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={StyleSheet.absoluteFill}
             />
-            {/* Depth vignette overlay */}
+            {/* Depth vignette */}
             <LinearGradient
               colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.28)']}
               locations={[0, 0.5, 1]}
@@ -80,7 +96,11 @@ export function Button({ label, onPress, variant = 'primary', style }: ButtonPro
             />
           </>
         )}
-        <Text style={styles.label}>{label}</Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.label}>{label}</Text>
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -105,11 +125,11 @@ function variantContainerStyle(variant: ButtonVariant): ViewStyle {
 
 const styles = StyleSheet.create({
   outer: {
-    borderRadius: 30,
+    borderRadius: 999,
   },
   base: {
-    borderRadius: 30,
-    paddingVertical: Spacing.md,
+    borderRadius: 999,
+    paddingVertical: 18,
     alignItems: 'center',
     overflow: 'hidden',
   },
@@ -125,6 +145,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: Palette.cometOrange,
+  },
+  disabled: {
+    opacity: 0.35,
   },
   label: {
     ...Typography.button,

@@ -508,6 +508,8 @@ export default function Onboarding() {
   const [livePhotoUris, setLivePhotoUris] = useState<string[]>([]);
   const sheetAnim = useRef(new Animated.Value(300)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
+  const stepOpacity = useRef(new Animated.Value(1)).current;
+  const stepTranslateY = useRef(new Animated.Value(0)).current;
   const [suggestedPrompts] = useState<string[]>(getSuggestedPrompts());
   const [showAllPrompts, setShowAllPrompts] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
@@ -533,6 +535,8 @@ export default function Onboarding() {
   }, [locationDenied]);
   const [promptAnswer, setPromptAnswer] = useState("");
   const [promptInputHeight, setPromptInputHeight] = useState(40);
+  const blockNextNewline = useRef(false);
+  const promptInputRef = useRef<TextInput>(null);
 
   const [data, setData] = useState<OnboardingData>({
     name: "",
@@ -555,8 +559,26 @@ export default function Onboarding() {
     setData((prev) => ({ ...prev, ...fields }));
   }
 
+  function animateStepIn() {
+    stepOpacity.setValue(0);
+    stepTranslateY.setValue(18);
+    Animated.parallel([
+      Animated.timing(stepOpacity, {
+        toValue: 1,
+        duration: 280,
+        useNativeDriver: true,
+      }),
+      Animated.timing(stepTranslateY, {
+        toValue: 0,
+        duration: 280,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }
+
   function nextStep() {
     setStep((s) => s + 1);
+    animateStepIn();
   }
 
   function handleContinue() {
@@ -569,6 +591,7 @@ export default function Onboarding() {
 
   function prevStep() {
     setStep((s) => s - 1);
+    animateStepIn();
   }
 
   // ─── Photo Picker ──────────────────────────────────────────────────────────
@@ -1454,6 +1477,7 @@ export default function Onboarding() {
                                 style={styles.promptInputGradientBorder}
                               >
                                 <TextInput
+                                  ref={promptInputRef}
                                   style={[
                                     styles.promptInputInner,
                                     { height: promptInputHeight },
@@ -1461,7 +1485,33 @@ export default function Onboarding() {
                                   placeholder="Enter response here"
                                   placeholderTextColor="rgba(255,255,255,0.5)"
                                   value={promptAnswer}
-                                  onChangeText={setPromptAnswer}
+                                  maxLength={100}
+                                  onKeyPress={({ nativeEvent }) => {
+                                    if (
+                                      nativeEvent.key === "Enter" &&
+                                      promptAnswer.includes("\n")
+                                    ) {
+                                      blockNextNewline.current = true;
+                                    }
+                                  }}
+                                  onChangeText={(text) => {
+                                    if (blockNextNewline.current) {
+                                      blockNextNewline.current = false;
+                                      promptInputRef.current?.setNativeProps({
+                                        text: promptAnswer,
+                                      });
+                                      return;
+                                    }
+                                    const firstNl = text.indexOf("\n");
+                                    const cleaned =
+                                      firstNl !== -1
+                                        ? text.slice(0, firstNl + 1) +
+                                          text
+                                            .slice(firstNl + 1)
+                                            .replace(/\n/g, "")
+                                        : text;
+                                    setPromptAnswer(cleaned);
+                                  }}
                                   onContentSizeChange={(e) =>
                                     setPromptInputHeight(
                                       Math.max(
@@ -1471,15 +1521,23 @@ export default function Onboarding() {
                                     )
                                   }
                                   multiline
-                                  maxLength={100}
                                   autoFocus
                                 />
                               </LinearGradient>
-                              <TouchableOpacity onPress={savePromptAnswer}>
-                                <Text style={styles.promptSaveText}>
-                                  Save answer
-                                </Text>
-                              </TouchableOpacity>
+                              <View style={styles.promptFooter}>
+                                {promptAnswer.length >= 100 ? (
+                                  <Text style={styles.promptCharCount}>
+                                    Max characters reached
+                                  </Text>
+                                ) : (
+                                  <View />
+                                )}
+                                <TouchableOpacity onPress={savePromptAnswer}>
+                                  <Text style={styles.promptSaveText}>
+                                    Save answer
+                                  </Text>
+                                </TouchableOpacity>
+                              </View>
                             </>
                           )}
                         </LinearGradient>
@@ -1609,7 +1667,10 @@ export default function Onboarding() {
     >
       {/* Progress bar */}
       <View style={styles.progressBar}>
-        <View
+        <LinearGradient
+          colors={["#2A7DE1", "#3CF6D5"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
           style={[
             styles.progressFill,
             { width: `${((step + 1) / TOTAL_STEPS) * 100}%` },
@@ -1626,7 +1687,14 @@ export default function Onboarding() {
       </TouchableOpacity>
 
       {/* Step content */}
-      <View style={styles.content}>{renderStep()}</View>
+      <Animated.View
+        style={[
+          styles.content,
+          { opacity: stepOpacity, transform: [{ translateY: stepTranslateY }] },
+        ]}
+      >
+        {renderStep()}
+      </Animated.View>
 
       {/* Next / Finish button — hidden on location step (it handles its own nav) */}
       {!isLocationStep && (
@@ -1637,9 +1705,16 @@ export default function Onboarding() {
           ]}
           onPress={isLastStep ? saveProfile : handleContinue}
           disabled={!canAdvance() || saving}
+          activeOpacity={0.85}
         >
           <LinearGradient
-            colors={["rgba(0,0,0,0.40)", "rgba(0,0,0,0)", "rgba(0,0,0,0.40)"]}
+            colors={["#2A7DE1", "#3CF6D5"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <LinearGradient
+            colors={["rgba(0,0,0,0.25)", "rgba(0,0,0,0)", "rgba(0,0,0,0.25)"]}
             locations={[0, 0.5, 1]}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
@@ -1675,7 +1750,6 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: 3,
-    backgroundColor: "#2A7DE1",
     borderRadius: 2,
   },
   backButton: {
@@ -1716,13 +1790,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   input: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#0d1f33",
     borderRadius: 10,
     padding: 14,
-    color: "#fff",
+    color: "#EAF6FF",
     fontSize: 16,
     fontFamily: "Montserrat-Regular",
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(42,125,225,0.2)",
   },
   agePreview: {
     color: "#888",
@@ -1793,16 +1869,16 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   optionButton: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#0d1f33",
     borderRadius: 10,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#1a1a1a",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   optionSelected: {
     borderColor: "#2A7DE1",
-    backgroundColor: "#0d1f33",
+    backgroundColor: "rgba(42,125,225,0.1)",
   },
   optionText: {
     color: "#aaa",
@@ -1969,7 +2045,7 @@ const styles = StyleSheet.create({
   },
   lifestyleDivider: {
     height: 1,
-    backgroundColor: "rgba(255,255,255,.9)",
+    backgroundColor: "rgba(255,255,255,0.08)",
     marginBottom: 24,
   },
   livePhotoSubtext: {
@@ -2142,6 +2218,17 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.45)",
     fontSize: 12,
   },
+  promptFooter: {
+    flexDirection: "column",
+    alignItems: "flex-end",
+    marginTop: 6,
+    gap: 4,
+  },
+  promptCharCount: {
+    color: "#FFB347",
+    fontSize: 12,
+    fontFamily: "Montserrat-Regular",
+  },
   promptSaveText: {
     color: "rgba(255,255,255,0.6)",
     fontSize: 12,
@@ -2242,12 +2329,16 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   nextButton: {
-    backgroundColor: "#2A7DE1",
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: "center",
     marginTop: 16,
     overflow: "hidden",
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   nextButtonDisabled: {
     opacity: 0.3,

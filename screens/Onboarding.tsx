@@ -203,9 +203,31 @@ function PickerColumn({
   scrollRef: { current: ScrollView | null };
   setter: (i: number) => void;
 }) {
+  const bumpAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    bumpAnim.setValue(1);
+    Animated.sequence([
+      Animated.timing(bumpAnim, {
+        toValue: 1.035,
+        duration: 75,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bumpAnim, {
+        toValue: 1,
+        duration: 130,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [selectedIdx]);
+
   function onScrollEnd(e: { nativeEvent: { contentOffset: { y: number } } }) {
     const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
-    setter(Math.max(0, Math.min(idx, items.length - 1)));
+    const clamped = Math.max(0, Math.min(idx, items.length - 1));
+    if (clamped !== selectedIdx) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setter(clamped);
   }
 
   return (
@@ -220,30 +242,40 @@ function PickerColumn({
         contentContainerStyle={{ paddingVertical: PICKER_PADDING }}
         style={{ height: PICKER_HEIGHT }}
       >
-        {items.map((item, i) => (
-          <View
-            key={item}
-            style={{
-              height: ITEM_HEIGHT,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Text
+        {items.map((item, i) => {
+          const isSelected = i === selectedIdx;
+          return (
+            <View
+              key={item}
               style={{
-                color: i === selectedIdx ? "#EAF6FF" : "rgba(234,246,255,0.28)",
-                fontSize: i === selectedIdx ? 20 : 16,
-                fontFamily:
-                  i === selectedIdx ? "Montserrat-Bold" : "Montserrat-Regular",
+                height: ITEM_HEIGHT,
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
-              {item}
-            </Text>
-          </View>
-        ))}
+              <Animated.View
+                style={
+                  isSelected ? { transform: [{ scale: bumpAnim }] } : undefined
+                }
+              >
+                <Text
+                  style={{
+                    color: isSelected ? "#EAF6FF" : "rgba(234,246,255,0.38)",
+                    fontSize: isSelected ? 21 : 16,
+                    fontFamily: isSelected
+                      ? "Montserrat-Bold"
+                      : "Montserrat-Regular",
+                  }}
+                >
+                  {item}
+                </Text>
+              </Animated.View>
+            </View>
+          );
+        })}
       </ScrollView>
       <LinearGradient
-        colors={["#000000", "transparent"]}
+        colors={["rgba(10,24,42,0.98)", "rgba(10,24,42,0.6)", "transparent"]}
         style={{
           position: "absolute",
           top: 0,
@@ -254,7 +286,7 @@ function PickerColumn({
         pointerEvents="none"
       />
       <LinearGradient
-        colors={["transparent", "#000000"]}
+        colors={["transparent", "rgba(10,24,42,0.6)", "rgba(10,24,42,0.98)"]}
         style={{
           position: "absolute",
           bottom: 0,
@@ -309,49 +341,65 @@ function BirthdayPicker({
   return (
     <View
       style={{
-        backgroundColor: "#0d1a2d",
-        borderRadius: 16,
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: "rgba(42,125,225,0.2)",
+        borderRadius: 20,
         marginTop: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 6,
       }}
     >
-      {/* Selection band */}
       <View
-        pointerEvents="none"
         style={{
-          position: "absolute",
-          top: PICKER_PADDING,
-          left: 0,
-          right: 0,
-          height: ITEM_HEIGHT,
-          borderTopWidth: 1,
-          borderBottomWidth: 1,
-          borderColor: "rgba(42,125,225,0.5)",
-          backgroundColor: "rgba(42,125,225,0.06)",
-          zIndex: 1,
+          backgroundColor: "rgba(15,42,68,0.6)",
+          borderRadius: 20,
+          overflow: "hidden",
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.08)",
         }}
-      />
-      <View style={{ flexDirection: "row" }}>
-        <PickerColumn
-          items={MONTHS}
-          selectedIdx={monthIdx}
-          scrollRef={monthRef}
-          setter={setMonthIdx}
+      >
+        {/* Selection band */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            top: PICKER_PADDING,
+            left: 8,
+            right: 8,
+            height: ITEM_HEIGHT,
+            borderRadius: 12,
+            backgroundColor: "rgba(42,125,225,0.11)",
+            borderWidth: 0.5,
+            borderColor: "rgba(60,246,213,0.14)",
+            shadowColor: "#3CF6D5",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.28,
+            shadowRadius: 9,
+            elevation: 4,
+            zIndex: 1,
+          }}
         />
-        <PickerColumn
-          items={DAYS}
-          selectedIdx={dayIdx}
-          scrollRef={dayRef}
-          setter={setDayIdx}
-        />
-        <PickerColumn
-          items={YEARS}
-          selectedIdx={yearIdx}
-          scrollRef={yearRef}
-          setter={setYearIdx}
-        />
+        <View style={{ flexDirection: "row" }}>
+          <PickerColumn
+            items={MONTHS}
+            selectedIdx={monthIdx}
+            scrollRef={monthRef}
+            setter={setMonthIdx}
+          />
+          <PickerColumn
+            items={DAYS}
+            selectedIdx={dayIdx}
+            scrollRef={dayRef}
+            setter={setDayIdx}
+          />
+          <PickerColumn
+            items={YEARS}
+            selectedIdx={yearIdx}
+            scrollRef={yearRef}
+            setter={setYearIdx}
+          />
+        </View>
       </View>
     </View>
   );
@@ -389,7 +437,7 @@ function InterestChip({
         pointerEvents="none"
       >
         <LinearGradient
-          colors={["#59DAE3", "#0B5CB4"]}
+          colors={["#3CF6D5", "#2A7DE1"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.interestChipGradientBorder}
@@ -434,7 +482,11 @@ function LifestyleOption({
 
   return (
     <TouchableOpacity
-      style={[styles.lifestyleOptionWrapper, wrapStyle]}
+      style={[
+        styles.lifestyleOptionWrapper,
+        selected && styles.lifestyleOptionSelectedGlow,
+        wrapStyle,
+      ]}
       onPress={onPress}
       activeOpacity={0.75}
     >
@@ -444,7 +496,7 @@ function LifestyleOption({
         pointerEvents="none"
       >
         <LinearGradient
-          colors={["#59DAE3", "#0B5CB4"]}
+          colors={["#3CF6D5", "#2A7DE1"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.lifestyleOptionGradientBorder}
@@ -1001,8 +1053,8 @@ export default function Onboarding() {
               step={1}
               containerStyle={styles.sliderContainer}
               trackStyle={styles.sliderTrack}
-              minimumTrackTintColor="#2A7DE1"
-              maximumTrackTintColor="#4B5563"
+              minimumTrackTintColor="#2AB6DC"
+              maximumTrackTintColor="rgba(255,255,255,0.12)"
               thumbStyle={styles.sliderThumb}
             />
             <View style={styles.sliderBounds}>
@@ -1035,8 +1087,8 @@ export default function Onboarding() {
               minimumValue={1}
               maximumValue={100}
               step={1}
-              minimumTrackTintColor="#2A7DE1"
-              maximumTrackTintColor="#4B5563"
+              minimumTrackTintColor="#2AB6DC"
+              maximumTrackTintColor="rgba(255,255,255,0.12)"
               containerStyle={styles.sliderContainer}
               trackStyle={styles.sliderTrack}
               thumbStyle={styles.sliderThumb}
@@ -1783,7 +1835,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   agePreview: {
-    color: "#888",
+    color: "rgba(234,246,255,0.3)",
     fontSize: 15,
     fontFamily: "Montserrat-Regular",
     textAlign: "center",
@@ -1827,15 +1879,15 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   sliderThumb: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 4,
+    shadowRadius: 7,
+    elevation: 5,
   },
   sliderBounds: {
     flexDirection: "row",
@@ -1859,8 +1911,13 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.08)",
   },
   optionSelected: {
-    borderColor: "#2A7DE1",
-    backgroundColor: "rgba(42,125,225,0.1)",
+    borderColor: "rgba(60,246,213,0.5)",
+    backgroundColor: "rgba(42,125,225,0.12)",
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 7,
+    elevation: 3,
   },
   optionText: {
     color: "#aaa",
@@ -1868,7 +1925,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Regular",
   },
   optionTextSelected: {
-    color: "#2A7DE1",
+    color: "#EAF6FF",
     fontFamily: "Montserrat-Bold",
   },
   primaryButton: {
@@ -1990,6 +2047,13 @@ const styles = StyleSheet.create({
   },
   lifestyleOptionWrapper: {
     flex: 1,
+  },
+  lifestyleOptionSelectedGlow: {
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 7,
+    elevation: 4,
   },
   lifestyleOptionGradientBorder: {
     flex: 1,

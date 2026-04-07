@@ -1955,13 +1955,13 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.08)",
   },
   optionSelected: {
-    borderColor: "rgba(60,246,213,0.5)",
+    borderColor: "rgba(60,246,213,0.35)",
     backgroundColor: "rgba(42,125,225,0.12)",
     shadowColor: "#3CF6D5",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.10,
     shadowRadius: 7,
-    elevation: 3,
+    elevation: 2,
   },
   optionText: {
     color: "#aaa",

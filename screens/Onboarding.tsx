@@ -541,7 +541,7 @@ type OnboardingData = {
   locationLng: number | null;
 };
 
-const TOTAL_STEPS = 14;
+const TOTAL_STEPS = 15;
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -908,6 +908,8 @@ export default function Onboarding() {
       case 12:
         return true; // location — always can skip
       case 13:
+        return true;
+      case 14:
         return true;
       default:
         return true;
@@ -1719,25 +1721,179 @@ export default function Onboarding() {
           </View>
         );
 
-      // Step 13 — Orbit explanation
-      case 13:
+      // Step 13 — Profile Preview
+      case 13: {
+        const previewAge = (() => {
+          if (!data.birthday) return 0;
+          const birth = new Date(data.birthday);
+          if (isNaN(birth.getTime())) return 0;
+          const today = new Date();
+          let age = today.getFullYear() - birth.getFullYear();
+          const m = today.getMonth() - birth.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+          return age;
+        })();
+
+        const mainPhoto = data.photos.filter(Boolean)[0];
+
+        return (
+          <View style={styles.stepContainer}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 8 }}
+            >
+              <Text style={styles.stepTitle}>How's your profile looking?</Text>
+              <Text style={styles.stepSubtitle}>
+                Take a quick look before you jump in.
+              </Text>
+
+              {/* 1. Photo hero */}
+              <View style={styles.previewCardWrapper}>
+                {mainPhoto ? (
+                  <Image
+                    source={{ uri: mainPhoto }}
+                    style={styles.previewHeroImage}
+                  />
+                ) : (
+                  <View style={styles.previewHeroPlaceholder}>
+                    <Text style={styles.previewHeroInitial}>
+                      {data.name?.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* 2. Name + identity pills */}
+              <View style={styles.previewIdentityBlock}>
+                <Text style={styles.previewName}>
+                  {data.name}
+                  {previewAge > 0 && (
+                    <Text style={styles.previewAge}>, {previewAge}</Text>
+                  )}
+                </Text>
+                <View style={styles.previewPillRow}>
+                  {data.gender ? (
+                    <View style={styles.previewIdentityPill}>
+                      <Text style={styles.previewIdentityPillText}>
+                        {data.gender}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {data.datingIntent ? (
+                    <View style={styles.previewIdentityPill}>
+                      <Text style={styles.previewIdentityPillText}>
+                        {data.datingIntent}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+
+              {/* 3. Prompts — lightweight, max 2 */}
+              {data.prompts.slice(0, 2).map((p, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.previewPromptRow,
+                    { marginBottom: i === 0 && data.prompts.length > 1 ? 16 : 24 },
+                  ]}
+                >
+                  <Text style={styles.previewPromptQ} numberOfLines={1}>
+                    {p.prompt}
+                  </Text>
+                  <Text style={styles.previewPromptA} numberOfLines={2}>
+                    {p.answer}
+                  </Text>
+                </View>
+              ))}
+
+              {/* 4. Interests — pills only, max 6 */}
+              {data.interests.length > 0 && (
+                <View style={[styles.previewPillRow, { marginBottom: 28 }]}>
+                  {data.interests.slice(0, 6).map((interest) => (
+                    <View key={interest} style={styles.previewPill}>
+                      <Text style={styles.previewPillText}>{interest}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* 5. Lifestyle + Work */}
+              {(data.lifestyle.drink ||
+                data.lifestyle.smoke ||
+                data.lifestyle.workout ||
+                data.career.school ||
+                data.career.work) && (
+                <View style={{ marginBottom: 16 }}>
+                  {data.lifestyle.drink && (
+                    <View style={styles.previewInfoRow}>
+                      <Text style={styles.previewInfoLabel}>Drinks: <Text style={styles.previewInfoValue}>{data.lifestyle.drink}</Text></Text>
+                    </View>
+                  )}
+                  {data.lifestyle.smoke && (
+                    <View style={styles.previewInfoRow}>
+                      <Text style={styles.previewInfoLabel}>Smoking: <Text style={styles.previewInfoValue}>{data.lifestyle.smoke}</Text></Text>
+                    </View>
+                  )}
+                  {data.lifestyle.workout && (
+                    <View style={styles.previewInfoRow}>
+                      <Text style={styles.previewInfoLabel}>Workout: <Text style={styles.previewInfoValue}>{data.lifestyle.workout}</Text></Text>
+                    </View>
+                  )}
+                  {data.career.school && (
+                    <View style={styles.previewInfoRow}>
+                      <Text style={styles.previewInfoLabel}>School: <Text style={styles.previewInfoValue}>{data.career.school}</Text></Text>
+                    </View>
+                  )}
+                  {data.career.work && (
+                    <View style={styles.previewInfoRow}>
+                      <Text style={styles.previewInfoLabel}>Work: <Text style={styles.previewInfoValue}>{data.career.work}</Text></Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Edit button */}
+              <TouchableOpacity
+                style={styles.previewEditBtn}
+                activeOpacity={0.7}
+                onPress={prevStep}
+              >
+                <Text style={styles.previewEditText}>Edit profile</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        );
+      }
+
+      // Step 14 — Orbit explanation
+      case 14:
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Welcome to COMET.</Text>
-            <Text style={styles.orbitExplain}>
-              COMET is built around one idea:{"\n\n"}
-              <Text style={styles.orbitHighlight}>One match at a time.</Text>
-            </Text>
+
+            <Text style={styles.orbitExplain}>COMET is built around one idea:</Text>
+
+            <Text style={styles.orbitCoreIdea}>One match at a time.</Text>
+
             <Text style={styles.orbitBody}>
               If you're interested in someone, send them a{" "}
-              <Text style={styles.orbitHighlight}>Signal</Text>.{"\n\n"}When you
-              and someone both signal each other, a{" "}
+              <Text style={styles.orbitHighlight}>Signal</Text>.
+            </Text>
+
+            <Text style={styles.orbitBody}>
+              When you and someone both signal each other, a{" "}
               <Text style={styles.orbitHighlight}>Collision</Text> occurs.
-              {"\n\n"}
+            </Text>
+
+            <Text style={styles.orbitBody}>
               You enter <Text style={styles.orbitHighlight}>Orbit</Text> — an
               exclusive chat phase where discovery pauses and you focus on one
-              connection.{"\n\n"}
-              You can <Text style={styles.orbitHighlight}>Drift</Text> anytime.
+              connection.
+            </Text>
+
+            <Text style={styles.orbitDrift}>
+              You can <Text style={styles.orbitHighlight}>Drift</Text> anytime.{" "}
               No pressure.
             </Text>
           </View>
@@ -1800,7 +1956,7 @@ export default function Onboarding() {
           onPress={isLastStep ? saveProfile : handleContinue}
           loading={saving}
           disabled={!canAdvance() || saving}
-          style={{ marginTop: 16 }}
+          style={{ marginTop: isLastStep ? 28 : 16 }}
         />
       )}
     </LinearGradient>
@@ -2448,20 +2604,168 @@ const styles = StyleSheet.create({
     color: "#EAF6FF",
   },
   orbitExplain: {
-    color: "#fff",
-    fontSize: 18,
-    fontFamily: "Montserrat-Regular",
-    lineHeight: 28,
-    marginBottom: 20,
-  },
-  orbitHighlight: {
-    color: "#2A7DE1",
-    fontFamily: "Montserrat-Bold",
-  },
-  orbitBody: {
-    color: "#888",
+    color: "rgba(234,246,255,0.7)",
     fontSize: 16,
     fontFamily: "Montserrat-Regular",
     lineHeight: 26,
+    marginBottom: 10,
+  },
+  orbitCoreIdea: {
+    color: "#EAF6FF",
+    fontSize: 22,
+    fontFamily: "Montserrat-Bold",
+    lineHeight: 30,
+    marginBottom: 28,
+  },
+  orbitHighlight: {
+    color: "#4DA3FF",
+    fontFamily: "Montserrat-Bold",
+  },
+  orbitBody: {
+    color: "rgba(234,246,255,0.75)",
+    fontSize: 16,
+    fontFamily: "Montserrat-Regular",
+    lineHeight: 26,
+    marginBottom: 16,
+  },
+  orbitDrift: {
+    color: "rgba(234,246,255,0.45)",
+    fontSize: 15,
+    fontFamily: "Montserrat-Regular",
+    lineHeight: 24,
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  previewCardWrapper: {
+    marginHorizontal: -24,
+    marginBottom: 24,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  previewHeroImage: {
+    width: "100%",
+    aspectRatio: 4 / 5,
+    resizeMode: "cover",
+  },
+  previewHeroPlaceholder: {
+    width: "100%",
+    aspectRatio: 4 / 5,
+    backgroundColor: "#0d1f33",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  previewHeroInitial: {
+    fontSize: 72,
+    color: "#2A7DE1",
+    fontFamily: "Montserrat-Bold",
+  },
+  previewIdentityBlock: {
+    marginBottom: 28,
+  },
+  previewName: {
+    color: "#EAF6FF",
+    fontSize: 28,
+    fontFamily: "Montserrat-Bold",
+    marginBottom: 14,
+  },
+  previewAge: {
+    color: "rgba(234,246,255,0.78)",
+    fontSize: 28,
+    fontFamily: "Montserrat-Regular",
+  },
+  previewIdentityPill: {
+    backgroundColor: "rgba(60,246,213,0.08)",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: "rgba(60,246,213,0.18)",
+  },
+  previewIdentityPillText: {
+    color: "#CFE9FF",
+    fontSize: 12,
+    fontFamily: "Montserrat-Regular",
+  },
+  previewDetails: {
+    marginBottom: 4,
+  },
+  previewSection: {
+    marginBottom: 20,
+  },
+  previewLabel: {
+    color: "rgba(234,246,255,0.45)",
+    fontSize: 11,
+    fontFamily: "Montserrat-Bold",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 5,
+  },
+  previewValue: {
+    color: "#EAF6FF",
+    fontSize: 15,
+    fontFamily: "Montserrat-Regular",
+    lineHeight: 22,
+  },
+  previewPromptQ: {
+    color: "rgba(234,246,255,0.45)",
+    fontSize: 12,
+    fontFamily: "Montserrat-Regular",
+    marginBottom: 6,
+  },
+  previewPromptA: {
+    color: "#EAF6FF",
+    fontSize: 15,
+    fontFamily: "Montserrat-Regular",
+    lineHeight: 22,
+  },
+  previewEditBtn: {
+    alignItems: "center",
+    paddingVertical: 16,
+    marginTop: 24,
+  },
+  previewEditText: {
+    color: "#3CF6D5",
+    fontSize: 14,
+    fontFamily: "Montserrat-Regular",
+    opacity: 0.7,
+  },
+  previewPromptRow: {
+    marginBottom: 0,
+  },
+  previewInfoRow: {
+    marginBottom: 10,
+  },
+  previewInfoLabel: {
+    color: "rgba(234,246,255,0.62)",
+    fontSize: 12,
+    fontFamily: "Montserrat-Regular",
+  },
+  previewInfoValue: {
+    color: "#EAF6FF",
+    fontSize: 14,
+    fontFamily: "Montserrat-Regular",
+  },
+  previewPillRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 16,
+  },
+  previewPill: {
+    backgroundColor: "rgba(60,246,213,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(60,246,213,0.16)",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+  },
+  previewPillText: {
+    color: "#EAF6FF",
+    fontSize: 13,
+    fontFamily: "Montserrat-Regular",
   },
 });

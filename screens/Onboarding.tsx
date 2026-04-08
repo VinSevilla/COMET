@@ -13,6 +13,7 @@ import {
   Alert,
   Animated,
   AppState,
+  Dimensions,
   Image,
   LayoutAnimation,
   Linking,
@@ -26,6 +27,8 @@ import {
   UIManager,
   View,
 } from "react-native";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ─── Prompt Data ────────────────────────────────────────────────────────────
@@ -583,6 +586,7 @@ export default function Onboarding() {
   >(null);
   const [localEditData, setLocalEditData] = useState<Partial<OnboardingData>>({});
   const [justEditedSection, setJustEditedSection] = useState<string | null>(null);
+  const [previewPhotoIndex, setPreviewPhotoIndex] = useState(0);
   const sectionHighlightAnim = useRef(new Animated.Value(0)).current;
 
   // When user returns from Settings after enabling location, auto-advance
@@ -2042,7 +2046,7 @@ export default function Onboarding() {
           return age;
         })();
 
-        const mainPhoto = data.photos.filter(Boolean)[0];
+        const previewPhotos = data.photos.filter(Boolean);
 
         return (
           <View style={styles.stepContainer}>
@@ -2057,11 +2061,42 @@ export default function Onboarding() {
 
               {/* 1. Photo hero */}
               <View style={styles.previewCardWrapper}>
-                {mainPhoto ? (
-                  <Image
-                    source={{ uri: mainPhoto }}
-                    style={styles.previewHeroImage}
-                  />
+                {previewPhotos.length > 0 ? (
+                  <>
+                    <ScrollView
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      scrollEventThrottle={16}
+                      onMomentumScrollEnd={(e) => {
+                        const page = Math.round(
+                          e.nativeEvent.contentOffset.x / SCREEN_WIDTH
+                        );
+                        setPreviewPhotoIndex(page);
+                      }}
+                    >
+                      {previewPhotos.map((uri, i) => (
+                        <Image
+                          key={i}
+                          source={{ uri }}
+                          style={[styles.previewHeroImage, { width: SCREEN_WIDTH }]}
+                        />
+                      ))}
+                    </ScrollView>
+                    {previewPhotos.length > 1 && (
+                      <View style={styles.previewPhotoDots}>
+                        {previewPhotos.map((_, i) => (
+                          <View
+                            key={i}
+                            style={[
+                              styles.previewPhotoDot,
+                              i === previewPhotoIndex && styles.previewPhotoDotActive,
+                            ]}
+                          />
+                        ))}
+                      </View>
+                    )}
+                  </>
                 ) : (
                   <View style={styles.previewHeroPlaceholder}>
                     <Text style={styles.previewHeroInitial}>
@@ -3043,6 +3078,25 @@ const styles = StyleSheet.create({
     width: "100%",
     aspectRatio: 4 / 5,
     resizeMode: "cover",
+  },
+  previewPhotoDots: {
+    position: "absolute",
+    bottom: 14,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+  },
+  previewPhotoDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.35)",
+  },
+  previewPhotoDotActive: {
+    width: 18,
+    backgroundColor: "#fff",
   },
   previewHeroPlaceholder: {
     width: "100%",

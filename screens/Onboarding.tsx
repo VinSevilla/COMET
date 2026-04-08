@@ -1795,7 +1795,7 @@ export default function Onboarding() {
                   key={i}
                   style={[
                     styles.previewPromptRow,
-                    { marginBottom: i === 0 && data.prompts.length > 1 ? 16 : 24 },
+                    { marginBottom: i === 0 && data.prompts.length > 1 ? 36 : 8 },
                   ]}
                 >
                   <Text style={styles.previewPromptQ} numberOfLines={1}>
@@ -1809,7 +1809,12 @@ export default function Onboarding() {
 
               {/* 4. Interests — pills only, max 6 */}
               {data.interests.length > 0 && (
-                <View style={[styles.previewPillRow, { marginBottom: 28 }]}>
+                <View
+                  style={[
+                    styles.previewPillRow,
+                    { marginTop: 52, marginBottom: 40, gap: 12 },
+                  ]}
+                >
                   {data.interests.slice(0, 6).map((interest) => (
                     <View key={interest} style={styles.previewPill}>
                       <Text style={styles.previewPillText}>{interest}</Text>
@@ -1818,40 +1823,59 @@ export default function Onboarding() {
                 </View>
               )}
 
-              {/* 5. Lifestyle + Work */}
-              {(data.lifestyle.drink ||
-                data.lifestyle.smoke ||
-                data.lifestyle.workout ||
-                data.career.school ||
-                data.career.work) && (
-                <View style={{ marginBottom: 16 }}>
-                  {data.lifestyle.drink && (
-                    <View style={styles.previewInfoRow}>
-                      <Text style={styles.previewInfoLabel}>Drinks: <Text style={styles.previewInfoValue}>{data.lifestyle.drink}</Text></Text>
-                    </View>
-                  )}
-                  {data.lifestyle.smoke && (
-                    <View style={styles.previewInfoRow}>
-                      <Text style={styles.previewInfoLabel}>Smoking: <Text style={styles.previewInfoValue}>{data.lifestyle.smoke}</Text></Text>
-                    </View>
-                  )}
-                  {data.lifestyle.workout && (
-                    <View style={styles.previewInfoRow}>
-                      <Text style={styles.previewInfoLabel}>Workout: <Text style={styles.previewInfoValue}>{data.lifestyle.workout}</Text></Text>
-                    </View>
-                  )}
-                  {data.career.school && (
-                    <View style={styles.previewInfoRow}>
-                      <Text style={styles.previewInfoLabel}>School: <Text style={styles.previewInfoValue}>{data.career.school}</Text></Text>
-                    </View>
-                  )}
-                  {data.career.work && (
-                    <View style={styles.previewInfoRow}>
-                      <Text style={styles.previewInfoLabel}>Work: <Text style={styles.previewInfoValue}>{data.career.work}</Text></Text>
-                    </View>
-                  )}
-                </View>
-              )}
+              {/* 5. Lifestyle + Work — human-readable phrases */}
+              {(() => {
+                const DRINK_LABEL: Record<string, string> = {
+                  Frequently: "Drinks often",
+                  Socially: "Drinks socially",
+                  Never: "Doesn't drink",
+                };
+                const SMOKE_LABEL: Record<string, string> = {
+                  Frequently: "Smokes regularly",
+                  Socially: "Social smoker",
+                  Never: "Doesn't smoke",
+                };
+                const WORKOUT_LABEL: Record<string, string> = {
+                  Often: "Works out regularly",
+                  Sometimes: "Sometimes works out",
+                  Never: "Doesn't work out",
+                };
+                const SCHOOL_LABEL: Record<string, string> = {
+                  College: "In college",
+                  "Grad school": "In grad school",
+                  "Trade school": "In trade school",
+                };
+                const WORK_LABEL: Record<string, string> = {
+                  Unemployed: "Currently not working",
+                  "Self-employed": "Self-employed",
+                  "Part-Time": "Works part-time",
+                  "Full-Time": "Works full-time",
+                };
+                const phraseItems = [
+                  data.lifestyle.drink && { icon: "glass-wine" as const, text: DRINK_LABEL[data.lifestyle.drink] },
+                  data.lifestyle.smoke && { icon: "smoking" as const, text: SMOKE_LABEL[data.lifestyle.smoke] },
+                  data.lifestyle.workout && { icon: "dumbbell" as const, text: WORKOUT_LABEL[data.lifestyle.workout] },
+                  data.career.school &&
+                    data.career.school !== "No" && { icon: "school" as const, text: SCHOOL_LABEL[data.career.school] },
+                  data.career.work && { icon: "briefcase" as const, text: WORK_LABEL[data.career.work] },
+                ].filter(Boolean) as { icon: keyof typeof MaterialCommunityIcons.glyphMap; text: string }[];
+
+                if (!phraseItems.length) return null;
+                return (
+                  <View style={{ marginBottom: 8 }}>
+                    {phraseItems.map((item, i) => (
+                      <View key={i} style={styles.previewPhraseRow}>
+                        <MaterialCommunityIcons
+                          name={item.icon}
+                          size={14}
+                          color="rgba(234,246,255,0.32)"
+                        />
+                        <Text style={styles.previewPhrase}>{item.text}</Text>
+                      </View>
+                    ))}
+                  </View>
+                );
+              })()}
 
               {/* Edit button */}
               <TouchableOpacity
@@ -2638,7 +2662,7 @@ const styles = StyleSheet.create({
   },
   previewCardWrapper: {
     marginHorizontal: -24,
-    marginBottom: 24,
+    marginBottom: 36,
     borderRadius: 16,
     overflow: "hidden",
   },
@@ -2660,26 +2684,26 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Bold",
   },
   previewIdentityBlock: {
-    marginBottom: 28,
+    marginBottom: 36,
   },
   previewName: {
     color: "#EAF6FF",
-    fontSize: 28,
+    fontSize: 30,
     fontFamily: "Montserrat-Bold",
     marginBottom: 14,
   },
   previewAge: {
-    color: "rgba(234,246,255,0.78)",
-    fontSize: 28,
+    color: "rgba(234,246,255,0.72)",
+    fontSize: 30,
     fontFamily: "Montserrat-Regular",
   },
   previewIdentityPill: {
-    backgroundColor: "rgba(60,246,213,0.08)",
+    backgroundColor: "rgba(60,246,213,0.05)",
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderWidth: 1,
-    borderColor: "rgba(60,246,213,0.18)",
+    borderColor: "rgba(60,246,213,0.12)",
   },
   previewIdentityPillText: {
     color: "#CFE9FF",
@@ -2707,16 +2731,16 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   previewPromptQ: {
-    color: "rgba(234,246,255,0.45)",
-    fontSize: 12,
+    color: "rgba(234,246,255,0.26)",
+    fontSize: 11,
     fontFamily: "Montserrat-Regular",
-    marginBottom: 6,
+    marginBottom: 10,
   },
   previewPromptA: {
     color: "#EAF6FF",
-    fontSize: 15,
+    fontSize: 18,
     fontFamily: "Montserrat-Regular",
-    lineHeight: 22,
+    lineHeight: 26,
   },
   previewEditBtn: {
     alignItems: "center",
@@ -2749,23 +2773,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginTop: 16,
+    marginTop: 8,
   },
   previewPill: {
-    backgroundColor: "rgba(60,246,213,0.06)",
+    backgroundColor: "rgba(60,246,213,0.03)",
     borderWidth: 1,
-    borderColor: "rgba(60,246,213,0.16)",
+    borderColor: "rgba(60,246,213,0.09)",
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    shadowColor: "#3CF6D5",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
   },
   previewPillText: {
     color: "#EAF6FF",
     fontSize: 13,
+    fontFamily: "Montserrat-Regular",
+  },
+  previewPhraseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    marginBottom: 7,
+  },
+  previewPhrase: {
+    color: "rgba(234,246,255,0.62)",
+    fontSize: 14,
     fontFamily: "Montserrat-Regular",
   },
 });

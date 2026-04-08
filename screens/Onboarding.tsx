@@ -578,6 +578,12 @@ export default function Onboarding() {
   const [showAllPrompts, setShowAllPrompts] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
   const [activePrompt, setActivePrompt] = useState<string | null>(null);
+  const [editingSection, setEditingSection] = useState<
+    "interests" | "lifestyle" | "prompts" | null
+  >(null);
+  const [localEditData, setLocalEditData] = useState<Partial<OnboardingData>>({});
+  const [justEditedSection, setJustEditedSection] = useState<string | null>(null);
+  const sectionHighlightAnim = useRef(new Animated.Value(0)).current;
 
   // When user returns from Settings after enabling location, auto-advance
   useEffect(() => {
@@ -811,6 +817,44 @@ export default function Onboarding() {
     update({ prompts: data.prompts.filter((_, i) => i !== index) });
   }
 
+  // ─── Edit Section Helpers ─────────────────────────────────────────────────
+
+  function updateLocal(fields: Partial<OnboardingData>) {
+    setLocalEditData((prev) => ({ ...prev, ...fields }));
+  }
+
+  function enterEditSection(section: "interests" | "lifestyle" | "prompts") {
+    setLocalEditData({ ...data });
+    setActivePrompt(null);
+    setPromptAnswer("");
+    setEditingSection(section);
+    animateStepIn();
+  }
+
+  function saveEditSection() {
+    const section = editingSection!;
+    update(localEditData as Partial<OnboardingData>);
+    setEditingSection(null);
+    setActivePrompt(null);
+    setPromptAnswer("");
+    setJustEditedSection(section);
+    sectionHighlightAnim.setValue(1);
+    Animated.timing(sectionHighlightAnim, {
+      toValue: 0,
+      duration: 1400,
+      delay: 400,
+      useNativeDriver: true,
+    }).start(() => setJustEditedSection(null));
+    animateStepIn();
+  }
+
+  function cancelEditSection() {
+    setEditingSection(null);
+    setActivePrompt(null);
+    setPromptAnswer("");
+    animateStepIn();
+  }
+
   // ─── Interests ────────────────────────────────────────────────────────────
 
   function toggleInterest(interest: string) {
@@ -916,9 +960,271 @@ export default function Onboarding() {
     }
   }
 
+  // ─── Edit Section Renderers ──────────────────────────────────────────────
+
+  function renderInterestsEdit() {
+    const selected = localEditData.interests ?? [];
+    return (
+      <View style={{ flex: 1 }}>
+        <View style={styles.editScreenHeader}>
+          <Text style={styles.stepTitle}>Your Interests</Text>
+          <Text style={styles.editCounter}>{selected.length}/5 selected</Text>
+        </View>
+        <Text style={styles.stepSubtitle}>Choose up to 5 that feel like you.</Text>
+        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+          {INTEREST_CATEGORIES.map((cat) => (
+            <View key={cat.category}>
+              <Text style={styles.sectionLabel}>{cat.category}</Text>
+              <View style={styles.chipRow}>
+                {cat.interests.map((interest) => (
+                  <InterestChip
+                    key={interest}
+                    label={interest}
+                    selected={selected.includes(interest)}
+                    onPress={() => {
+                      if (selected.includes(interest)) {
+                        updateLocal({ interests: selected.filter((i) => i !== interest) });
+                      } else if (selected.length < 5) {
+                        updateLocal({ interests: [...selected, interest] });
+                      }
+                    }}
+                  />
+                ))}
+              </View>
+            </View>
+          ))}
+          <View style={{ height: 24 }} />
+        </ScrollView>
+        <View style={styles.editActions}>
+          <Button
+            variant="primary"
+            label="Save"
+            onPress={saveEditSection}
+            disabled={selected.length === 0}
+          />
+          <TouchableOpacity style={styles.editCancelButton} onPress={cancelEditSection}>
+            <Text style={styles.editCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  function renderLifestyleEdit() {
+    const lifestyle = (localEditData.lifestyle ?? {
+      drink: "",
+      smoke: "",
+      workout: "",
+    }) as typeof data.lifestyle;
+
+    const row = (
+      icon: keyof typeof MaterialCommunityIcons.glyphMap,
+      question: string,
+      field: keyof typeof lifestyle,
+      options: string[],
+      showDivider: boolean,
+    ) => (
+      <View key={field}>
+        <View style={styles.lifestyleQuestion}>
+          <MaterialCommunityIcons name={icon} size={20} color="#6A8FAF" />
+          <Text style={styles.lifestyleQuestionText}>{question}</Text>
+        </View>
+        <View style={styles.lifestyleOptions}>
+          {options.map((opt) => (
+            <LifestyleOption
+              key={opt}
+              opt={opt}
+              selected={lifestyle[field] === opt}
+              onPress={() =>
+                updateLocal({ lifestyle: { ...lifestyle, [field]: opt } })
+              }
+            />
+          ))}
+        </View>
+        {showDivider && <View style={styles.lifestyleDivider} />}
+      </View>
+    );
+
+    const canSave =
+      lifestyle.drink !== "" && lifestyle.smoke !== "" && lifestyle.workout !== "";
+
+    return (
+      <View style={{ flex: 1 }}>
+        <Text style={styles.stepTitle}>Your Lifestyle</Text>
+        <Text style={styles.stepSubtitle}>Update how you live.</Text>
+        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+          {row("glass-wine", "Do you drink?", "drink", ["Frequently", "Socially", "Never"], true)}
+          {row("smoking", "Do you smoke?", "smoke", ["Frequently", "Socially", "Never"], true)}
+          {row("dumbbell", "Do you workout?", "workout", ["Often", "Sometimes", "Never"], false)}
+          <View style={{ height: 24 }} />
+        </ScrollView>
+        <View style={styles.editActions}>
+          <Button
+            variant="primary"
+            label="Save"
+            onPress={saveEditSection}
+            disabled={!canSave}
+          />
+          <TouchableOpacity style={styles.editCancelButton} onPress={cancelEditSection}>
+            <Text style={styles.editCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  function renderPromptsEdit() {
+    const prompts = localEditData.prompts ?? [];
+
+    return (
+      <View style={{ flex: 1 }}>
+        <Text style={styles.stepTitle}>Your Prompts</Text>
+        <Text style={styles.stepSubtitle}>Pick 2–3 and answer them.</Text>
+        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+          {prompts.map((p, i) => (
+            <View key={i} style={styles.answeredPrompt}>
+              <Text style={styles.answeredBadge}>✓ Answered</Text>
+              <Text style={styles.answeredPromptLabel}>{p.prompt}</Text>
+              <Text style={styles.answeredPromptAnswer}>{p.answer}</Text>
+              <TouchableOpacity
+                onPress={() =>
+                  updateLocal({ prompts: prompts.filter((_, j) => j !== i) })
+                }
+              >
+                <Text style={styles.removeText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          {prompts.length < 3 && (
+            <>
+              <Text style={styles.sectionLabel}>Suggested for you</Text>
+              {(showAllPrompts ? ALL_PROMPTS : suggestedPrompts).map((prompt) => {
+                const already = prompts.find((p) => p.prompt === prompt);
+                const isActive = activePrompt === prompt;
+                return (
+                  <TouchableOpacity
+                    key={prompt}
+                    style={already && styles.promptOptionUsed}
+                    onPress={() => {
+                      if (already || isActive || prompts.length >= 3) return;
+                      LayoutAnimation.configureNext(PROMPT_EXPAND_ANIMATION);
+                      setActivePrompt(prompt);
+                      setPromptAnswer("");
+                      setPromptInputHeight(40);
+                    }}
+                    disabled={!!already}
+                    activeOpacity={isActive ? 1 : 0.75}
+                  >
+                    <View style={[styles.promptOption, isActive && styles.promptOptionActive]}>
+                      <Text style={styles.promptOptionText}>{prompt}</Text>
+                      {isActive && (
+                        <TouchableOpacity
+                          style={styles.promptDismiss}
+                          onPress={() => {
+                            LayoutAnimation.configureNext(PROMPT_EXPAND_ANIMATION);
+                            setActivePrompt(null);
+                          }}
+                          hitSlop={{ top: 8, left: 8, bottom: 8, right: 8 }}
+                        >
+                          <Text style={styles.promptDismissText}>✕</Text>
+                        </TouchableOpacity>
+                      )}
+                      {isActive && (
+                        <>
+                          <View style={styles.promptInputContainer}>
+                            <TextInput
+                              ref={promptInputRef}
+                              style={[styles.promptInputInner, { height: promptInputHeight }]}
+                              placeholder="Enter response here"
+                              placeholderTextColor="rgba(234,246,255,0.35)"
+                              value={promptAnswer}
+                              maxLength={100}
+                              onChangeText={(text) => {
+                                const firstNl = text.indexOf("\n");
+                                const cleaned =
+                                  firstNl !== -1
+                                    ? text.slice(0, firstNl + 1) +
+                                      text.slice(firstNl + 1).replace(/\n/g, "")
+                                    : text;
+                                setPromptAnswer(cleaned);
+                              }}
+                              onContentSizeChange={(e) =>
+                                setPromptInputHeight(
+                                  Math.max(40, e.nativeEvent.contentSize.height),
+                                )
+                              }
+                              multiline
+                              autoFocus
+                            />
+                          </View>
+                          <View style={styles.promptFooter}>
+                            {promptAnswer.length >= 100 ? (
+                              <Text style={styles.promptCharCount}>
+                                Character limit reached
+                              </Text>
+                            ) : (
+                              <View />
+                            )}
+                            <TouchableOpacity
+                              onPress={() => {
+                                if (!activePrompt || !promptAnswer.trim()) return;
+                                LayoutAnimation.configureNext(PROMPT_EXPAND_ANIMATION);
+                                updateLocal({
+                                  prompts: [
+                                    ...prompts,
+                                    { prompt: activePrompt, answer: promptAnswer.trim() },
+                                  ],
+                                });
+                                setActivePrompt(null);
+                                setPromptAnswer("");
+                              }}
+                            >
+                              <Text style={styles.promptSaveText}>Save answer</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+              {!showAllPrompts && (
+                <Animated.View style={{ opacity: seeMoreOpacity }}>
+                  <TouchableOpacity
+                    onPress={() => setShowAllPrompts(true)}
+                    activeOpacity={1}
+                  >
+                    <Text style={styles.seeMore}>See more prompts</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              )}
+            </>
+          )}
+          <View style={{ height: 24 }} />
+        </ScrollView>
+        <View style={styles.editActions}>
+          <Button
+            variant="primary"
+            label="Save"
+            onPress={saveEditSection}
+            disabled={prompts.length < 2}
+          />
+          <TouchableOpacity style={styles.editCancelButton} onPress={cancelEditSection}>
+            <Text style={styles.editCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   // ─── Step Renderers ────────────────────────────────────────────────────────
 
   function renderStep() {
+    if (step === 13 && editingSection === "interests") return renderInterestsEdit();
+    if (step === 13 && editingSection === "lifestyle") return renderLifestyleEdit();
+    if (step === 13 && editingSection === "prompts") return renderPromptsEdit();
+
     switch (step) {
       // Step 0 — Name
       case 0:
@@ -1790,37 +2096,80 @@ export default function Onboarding() {
               </View>
 
               {/* 3. Prompts — lightweight, max 2 */}
-              {data.prompts.slice(0, 2).map((p, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.previewPromptRow,
-                    { marginBottom: i === 0 && data.prompts.length > 1 ? 36 : 8 },
-                  ]}
-                >
-                  <Text style={styles.previewPromptQ} numberOfLines={1}>
-                    {p.prompt}
-                  </Text>
-                  <Text style={styles.previewPromptA} numberOfLines={2}>
-                    {p.answer}
-                  </Text>
+              <TouchableOpacity
+                style={styles.previewEditableSection}
+                onPress={() => enterEditSection("prompts")}
+                activeOpacity={0.75}
+              >
+                <View style={styles.previewSectionHeader}>
+                  <Text style={styles.previewSectionLabel}>Prompts</Text>
+                  <MaterialCommunityIcons
+                    name="pencil-outline"
+                    size={13}
+                    color="rgba(234,246,255,0.22)"
+                  />
                 </View>
-              ))}
+                {data.prompts.slice(0, 3).map((p, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.previewPromptRow,
+                      { marginBottom: i < data.prompts.slice(0, 3).length - 1 ? 36 : 8 },
+                    ]}
+                  >
+                    <Text style={styles.previewPromptQ} numberOfLines={1}>
+                      {p.prompt}
+                    </Text>
+                    <Text style={styles.previewPromptA} numberOfLines={2}>
+                      {p.answer}
+                    </Text>
+                  </View>
+                ))}
+                {justEditedSection === "prompts" && (
+                  <Animated.View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFill,
+                      styles.previewSectionGlow,
+                      { opacity: sectionHighlightAnim },
+                    ]}
+                  />
+                )}
+              </TouchableOpacity>
 
               {/* 4. Interests — pills only, max 6 */}
               {data.interests.length > 0 && (
-                <View
-                  style={[
-                    styles.previewPillRow,
-                    { marginTop: 52, marginBottom: 40, gap: 12 },
-                  ]}
+                <TouchableOpacity
+                  style={[styles.previewEditableSection, { marginTop: 52, marginBottom: 40 }]}
+                  onPress={() => enterEditSection("interests")}
+                  activeOpacity={0.75}
                 >
-                  {data.interests.slice(0, 6).map((interest) => (
-                    <View key={interest} style={styles.previewPill}>
-                      <Text style={styles.previewPillText}>{interest}</Text>
-                    </View>
-                  ))}
-                </View>
+                  <View style={styles.previewSectionHeader}>
+                    <Text style={styles.previewSectionLabel}>Interests</Text>
+                    <MaterialCommunityIcons
+                      name="pencil-outline"
+                      size={13}
+                      color="rgba(234,246,255,0.22)"
+                    />
+                  </View>
+                  <View style={[styles.previewPillRow, { gap: 12 }]}>
+                    {data.interests.slice(0, 6).map((interest) => (
+                      <View key={interest} style={styles.previewPill}>
+                        <Text style={styles.previewPillText}>{interest}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {justEditedSection === "interests" && (
+                    <Animated.View
+                      pointerEvents="none"
+                      style={[
+                        StyleSheet.absoluteFill,
+                        styles.previewSectionGlow,
+                        { opacity: sectionHighlightAnim },
+                      ]}
+                    />
+                  )}
+                </TouchableOpacity>
               )}
 
               {/* 5. Lifestyle + Work — human-readable phrases */}
@@ -1862,29 +2211,45 @@ export default function Onboarding() {
 
                 if (!phraseItems.length) return null;
                 return (
-                  <View style={{ marginBottom: 8 }}>
-                    {phraseItems.map((item, i) => (
-                      <View key={i} style={styles.previewPhraseRow}>
-                        <MaterialCommunityIcons
-                          name={item.icon}
-                          size={14}
-                          color="rgba(234,246,255,0.32)"
-                        />
-                        <Text style={styles.previewPhrase}>{item.text}</Text>
-                      </View>
-                    ))}
-                  </View>
+                  <TouchableOpacity
+                    style={styles.previewEditableSection}
+                    onPress={() => enterEditSection("lifestyle")}
+                    activeOpacity={0.75}
+                  >
+                    <View style={styles.previewSectionHeader}>
+                      <Text style={styles.previewSectionLabel}>Lifestyle</Text>
+                      <MaterialCommunityIcons
+                        name="pencil-outline"
+                        size={13}
+                        color="rgba(234,246,255,0.22)"
+                      />
+                    </View>
+                    <View style={{ marginBottom: 8 }}>
+                      {phraseItems.map((item, i) => (
+                        <View key={i} style={styles.previewPhraseRow}>
+                          <MaterialCommunityIcons
+                            name={item.icon}
+                            size={14}
+                            color="rgba(234,246,255,0.32)"
+                          />
+                          <Text style={styles.previewPhrase}>{item.text}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    {justEditedSection === "lifestyle" && (
+                      <Animated.View
+                        pointerEvents="none"
+                        style={[
+                          StyleSheet.absoluteFill,
+                          styles.previewSectionGlow,
+                          { opacity: sectionHighlightAnim },
+                        ]}
+                      />
+                    )}
+                  </TouchableOpacity>
                 );
               })()}
 
-              {/* Edit button */}
-              <TouchableOpacity
-                style={styles.previewEditBtn}
-                activeOpacity={0.7}
-                onPress={prevStep}
-              >
-                <Text style={styles.previewEditText}>Edit profile</Text>
-              </TouchableOpacity>
             </ScrollView>
           </View>
         );
@@ -1956,7 +2321,13 @@ export default function Onboarding() {
 
       {/* Back button */}
       <TouchableOpacity
-        onPress={step === 0 ? () => router.replace("/(auth)/signup") : prevStep}
+        onPress={
+          editingSection !== null
+            ? cancelEditSection
+            : step === 0
+            ? () => router.replace("/(auth)/signup")
+            : prevStep
+        }
         style={styles.backButton}
       >
         <Text style={styles.backArrow}>←</Text>
@@ -1972,8 +2343,8 @@ export default function Onboarding() {
         {renderStep()}
       </Animated.View>
 
-      {/* Next / Finish button — hidden on location step (it handles its own nav) */}
-      {!isLocationStep && (
+      {/* Next / Finish button — hidden on location step and during section editing */}
+      {!isLocationStep && editingSection === null && (
         <Button
           variant="primary"
           label={isLastStep ? "Let's go" : "Continue"}
@@ -2796,6 +3167,54 @@ const styles = StyleSheet.create({
   },
   previewPhrase: {
     color: "rgba(234,246,255,0.62)",
+    fontSize: 14,
+    fontFamily: "Montserrat-Regular",
+  },
+  previewEditableSection: {
+    position: "relative",
+    marginBottom: 8,
+  },
+  previewSectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  previewSectionLabel: {
+    color: "rgba(234,246,255,0.28)",
+    fontSize: 10,
+    fontFamily: "Montserrat-Bold",
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+  },
+  previewSectionGlow: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(60,246,213,0.28)",
+    backgroundColor: "rgba(60,246,213,0.03)",
+  },
+  editScreenHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginBottom: 4,
+  },
+  editCounter: {
+    color: "rgba(234,246,255,0.45)",
+    fontSize: 13,
+    fontFamily: "Montserrat-Regular",
+    paddingBottom: 6,
+  },
+  editActions: {
+    paddingTop: 16,
+    gap: 4,
+  },
+  editCancelButton: {
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+  editCancelText: {
+    color: "rgba(234,246,255,0.38)",
     fontSize: 14,
     fontFamily: "Montserrat-Regular",
   },

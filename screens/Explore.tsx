@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Glow } from "@/constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Explore() {
@@ -27,7 +28,7 @@ export default function Explore() {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("id, name, age, gender, dating_intent, interests, prompts, photos")
+      .select("id, name, age, gender, dating_intent, interests, prompts, photos, lifestyle, career")
       .neq("id", user.id)
       .then(({ data }) => {
         setProfiles(data ?? []);
@@ -97,7 +98,14 @@ export default function Explore() {
           style={[styles.signalButton, actioning && styles.buttonDisabled]}
           onPress={handleSignal}
           disabled={actioning}
+          activeOpacity={0.88}
         >
+          <LinearGradient
+            colors={["#2A7DE1", "#3CF6D5"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
           {actioning ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
@@ -128,32 +136,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 16,
     gap: 12,
-    backgroundColor: "rgba(0,0,0,0.75)",
+    backgroundColor: "rgba(8,16,28,0.85)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.05)",
   },
   passButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#444",
-    borderRadius: 12,
+    borderColor: "rgba(255,255,255,0.12)",
+    borderRadius: 999,
     paddingVertical: 16,
     alignItems: "center",
   },
   passText: {
-    color: "#888",
+    color: "rgba(234,246,255,0.45)",
     fontSize: 16,
     fontFamily: "Montserrat-Bold",
   },
   signalButton: {
     flex: 2,
-    backgroundColor: "#2A7DE1",
-    borderRadius: 12,
+    borderRadius: 999,
     paddingVertical: 16,
     alignItems: "center",
+    overflow: "hidden",
+    ...Glow.teal,
   },
   signalText: {
     color: "#fff",
     fontSize: 16,
     fontFamily: "Montserrat-Bold",
+    letterSpacing: 0.5,
+    zIndex: 1,
   },
   buttonDisabled: {
     opacity: 0.6,

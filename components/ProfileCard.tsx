@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useState } from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const PHOTO_HEIGHT = 480;
@@ -24,6 +25,35 @@ export type ProfileData = {
   interests: string[];
   prompts: PromptEntry[];
   photos: string[];
+  lifestyle?: { drink?: string; smoke?: string; workout?: string } | null;
+  career?: { school?: string; work?: string } | null;
+};
+
+const DRINK_LABEL: Record<string, string> = {
+  Frequently: "Drinks often",
+  Socially: "Drinks socially",
+  Never: "Doesn't drink",
+};
+const SMOKE_LABEL: Record<string, string> = {
+  Frequently: "Smokes regularly",
+  Socially: "Social smoker",
+  Never: "Doesn't smoke",
+};
+const WORKOUT_LABEL: Record<string, string> = {
+  Often: "Works out regularly",
+  Sometimes: "Sometimes works out",
+  Never: "Doesn't work out",
+};
+const SCHOOL_LABEL: Record<string, string> = {
+  College: "In college",
+  "Grad school": "In grad school",
+  "Trade school": "In trade school",
+};
+const WORK_LABEL: Record<string, string> = {
+  Unemployed: "Currently not working",
+  "Self-employed": "Self-employed",
+  "Part-Time": "Works part-time",
+  "Full-Time": "Works full-time",
 };
 
 function PhotoSwiper({ photos, name }: { photos: string[]; name: string }) {
@@ -77,47 +107,89 @@ export default function ProfileCard({ profile }: { profile: ProfileData }) {
       <PhotoSwiper photos={profile.photos} name={profile.name} />
 
       <View style={styles.info}>
-        <Text style={styles.name}>
-          {profile.name}, {profile.age}
-        </Text>
-
-        <View style={styles.tagRow}>
-          {profile.gender ? (
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{profile.gender}</Text>
-            </View>
-          ) : null}
-          {profile.dating_intent ? (
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{profile.dating_intent}</Text>
-            </View>
-          ) : null}
+        {/* Name + identity pills */}
+        <View style={styles.identityBlock}>
+          <Text style={styles.name}>
+            {profile.name}
+            {profile.age ? `, ${profile.age}` : ""}
+          </Text>
+          <View style={styles.pillRow}>
+            {profile.gender ? (
+              <View style={styles.identityPill}>
+                <Text style={styles.identityPillText}>{profile.gender}</Text>
+              </View>
+            ) : null}
+            {profile.dating_intent ? (
+              <View style={styles.identityPill}>
+                <Text style={styles.identityPillText}>{profile.dating_intent}</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
 
+        {/* Prompts */}
         {profile.prompts?.length > 0 ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Prompts</Text>
             {profile.prompts.map((p, i) => (
-              <View key={i} style={styles.promptCard}>
-                <Text style={styles.promptQuestion}>{p.prompt}</Text>
-                <Text style={styles.promptAnswer}>{p.answer}</Text>
+              <View
+                key={i}
+                style={{ marginBottom: i < profile.prompts.length - 1 ? 36 : 8 }}
+              >
+                <Text style={styles.promptQ} numberOfLines={1}>
+                  {p.prompt}
+                </Text>
+                <Text style={styles.promptA} numberOfLines={3}>
+                  {p.answer}
+                </Text>
               </View>
             ))}
           </View>
         ) : null}
 
+        {/* Interests */}
         {profile.interests?.length > 0 ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Interests</Text>
-            <View style={styles.chipRow}>
+            <View style={styles.pillRow}>
               {profile.interests.map((interest) => (
-                <View key={interest} style={styles.chip}>
-                  <Text style={styles.chipText}>{interest}</Text>
+                <View key={interest} style={styles.pill}>
+                  <Text style={styles.pillText}>{interest}</Text>
                 </View>
               ))}
             </View>
           </View>
         ) : null}
+
+        {/* Lifestyle + Career */}
+        {(() => {
+          const l = profile.lifestyle;
+          const c = profile.career;
+          const phraseItems = [
+            l?.drink && { icon: "glass-wine" as const, text: DRINK_LABEL[l.drink] },
+            l?.smoke && { icon: "smoking" as const, text: SMOKE_LABEL[l.smoke] },
+            l?.workout && { icon: "dumbbell" as const, text: WORKOUT_LABEL[l.workout] },
+            c?.school && c.school !== "No" && { icon: "school" as const, text: SCHOOL_LABEL[c.school] },
+            c?.work && { icon: "briefcase" as const, text: WORK_LABEL[c.work] },
+          ].filter(Boolean) as { icon: keyof typeof MaterialCommunityIcons.glyphMap; text: string }[];
+
+          if (!phraseItems.length) return null;
+          return (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Lifestyle</Text>
+              {phraseItems.map((item, i) => (
+                <View key={i} style={styles.phraseRow}>
+                  <MaterialCommunityIcons
+                    name={item.icon}
+                    size={14}
+                    color="rgba(234,246,255,0.32)"
+                  />
+                  <Text style={styles.phraseText}>{item.text}</Text>
+                </View>
+              ))}
+            </View>
+          );
+        })()}
       </View>
     </View>
   );
@@ -146,7 +218,7 @@ const styles = StyleSheet.create({
   },
   photoInitial: {
     fontSize: 80,
-    color: "#2A7DE1",
+    color: "rgba(60,246,213,0.6)",
     fontFamily: "Montserrat-Bold",
   },
   dotsRow: {
@@ -173,75 +245,77 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 20,
   },
+  identityBlock: {
+    marginBottom: 36,
+  },
   name: {
     fontSize: 30,
     fontFamily: "Montserrat-Bold",
-    color: "#fff",
-    marginBottom: 10,
+    color: "#EAF6FF",
+    marginBottom: 14,
   },
-  tagRow: {
+  pillRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginBottom: 24,
   },
-  tag: {
-    backgroundColor: "#0d1f33",
+  identityPill: {
+    backgroundColor: "rgba(60,246,213,0.05)",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "#2A7DE1",
+    borderColor: "rgba(60,246,213,0.12)",
   },
-  tagText: {
-    color: "#2A7DE1",
-    fontSize: 13,
+  identityPillText: {
+    color: "#CFE9FF",
+    fontSize: 12,
     fontFamily: "Montserrat-Regular",
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   sectionLabel: {
-    color: "#555",
-    fontSize: 11,
+    color: "rgba(234,246,255,0.28)",
+    fontSize: 10,
     fontFamily: "Montserrat-Bold",
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 1.2,
+    marginBottom: 12,
+  },
+  promptQ: {
+    color: "rgba(234,246,255,0.26)",
+    fontSize: 11,
+    fontFamily: "Montserrat-Regular",
     marginBottom: 10,
   },
-  promptCard: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
-  },
-  promptQuestion: {
-    color: "#2A7DE1",
-    fontSize: 12,
+  promptA: {
+    color: "#EAF6FF",
+    fontSize: 18,
+    lineHeight: 26,
     fontFamily: "Montserrat-Regular",
-    marginBottom: 6,
   },
-  promptAnswer: {
-    color: "#fff",
-    fontSize: 15,
-    fontFamily: "Montserrat-Regular",
-    lineHeight: 22,
-  },
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  chip: {
-    backgroundColor: "#0d1f33",
+  pill: {
+    backgroundColor: "rgba(60,246,213,0.03)",
     borderRadius: 20,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "#2A7DE1",
+    borderColor: "rgba(60,246,213,0.09)",
   },
-  chipText: {
-    color: "#2A7DE1",
+  pillText: {
+    color: "#EAF6FF",
+    fontSize: 13,
+    fontFamily: "Montserrat-Regular",
+  },
+  phraseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    marginBottom: 7,
+  },
+  phraseText: {
+    color: "rgba(234,246,255,0.62)",
     fontSize: 14,
     fontFamily: "Montserrat-Regular",
   },

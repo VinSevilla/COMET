@@ -900,6 +900,8 @@ export default function Onboarding() {
       preferred_age_max: data.ageRange[1],
       location_lat: data.locationLat,
       location_lng: data.locationLng,
+      lifestyle: data.lifestyle,
+      career: data.career,
       // Photos upload to Supabase Storage is a future step.
       // For now we store nothing — photos will be added later.
     });

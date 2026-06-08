@@ -11,7 +11,8 @@
       "Bash(npx expo *)",
       "Bash(lsof -iTCP:8081 -sTCP:LISTEN -n -P)",
       "Bash(curl -s -m 3 http://localhost:8081/status)",
-      "Bash(node -e \"const p=require\\('./package.json'\\);const d={...p.dependencies};console.log\\('expo-file-system:',d['expo-file-system']\\);console.log\\('expo-image-picker:',d['expo-image-picker']\\);console.log\\('base64-arraybuffer:',d['base64-arraybuffer']\\)\")"
+      "Bash(node -e \"const p=require\\('./package.json'\\);const d={...p.dependencies};console.log\\('expo-file-system:',d['expo-file-system']\\);console.log\\('expo-image-picker:',d['expo-image-picker']\\);console.log\\('base64-arraybuffer:',d['base64-arraybuffer']\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\);const d=p.dependencies;['expo','expo-router','react-native','react','@supabase/supabase-js','expo-secure-store','expo-image-picker','expo-linear-gradient','react-native-reanimated','react-native-safe-area-context','@expo/vector-icons','expo-font','react-native-gesture-handler'].forEach\\(k=>console.log\\(k+':',d[k]||'—'\\)\\)\")"
     ]
   }
 }

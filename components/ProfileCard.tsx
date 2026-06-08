@@ -134,6 +134,7 @@ export default function ProfileCard({ profile }: { profile: ProfileData }) {
       <View style={styles.info}>
         {/* Name + identity pills */}
         <View style={styles.identityBlock}>
+          <Text style={styles.eyebrow}>Explorer Profile</Text>
           <Text style={styles.name}>
             {profile.name}
             {profile.age ? `, ${profile.age}` : ""}
@@ -145,8 +146,10 @@ export default function ProfileCard({ profile }: { profile: ProfileData }) {
               </View>
             ) : null}
             {profile.dating_intent ? (
-              <View style={styles.identityPill}>
-                <Text style={styles.identityPillText}>{profile.dating_intent}</Text>
+              <View style={styles.identityPillPrimary}>
+                <Text style={styles.identityPillPrimaryText}>
+                  {profile.dating_intent}
+                </Text>
               </View>
             ) : null}
           </View>
@@ -155,7 +158,7 @@ export default function ProfileCard({ profile }: { profile: ProfileData }) {
         {/* Prompts */}
         {profile.prompts?.length > 0 ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Prompts</Text>
+            <Text style={styles.sectionLabel}>Mission Log</Text>
             {profile.prompts.map((p, i) => (
               <View
                 key={i}
@@ -207,7 +210,7 @@ export default function ProfileCard({ profile }: { profile: ProfileData }) {
                   <MaterialCommunityIcons
                     name={item.icon}
                     size={14}
-                    color="rgba(234,246,255,0.32)"
+                    color="#6A8FAF"
                   />
                   <Text style={styles.phraseText}>{item.text}</Text>
                 </View>
@@ -290,11 +293,28 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   info: {
+    // Surface panel: lifts content off the gradient (matches onboarding
+    // surfaces) and rises subtly over the photo with a hairline top edge.
+    backgroundColor: "#0a1929",
+    marginTop: -10,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 28,
+    paddingBottom: 28,
   },
   identityBlock: {
-    marginBottom: 36,
+    marginBottom: 0,
+  },
+  eyebrow: {
+    color: "rgba(60,246,213,0.55)",
+    fontSize: 11,
+    fontFamily: "Montserrat-Bold",
+    textTransform: "uppercase",
+    letterSpacing: 2,
+    marginBottom: 6,
   },
   name: {
     fontSize: 30,
@@ -307,24 +327,50 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
   },
+  // Demographic pill (e.g. gender): calm neutral surface, like an unselected
+  // onboarding option.
   identityPill: {
-    backgroundColor: "rgba(60,246,213,0.05)",
+    backgroundColor: "#0d1f33",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "rgba(60,246,213,0.12)",
+    borderColor: "rgba(255,255,255,0.10)",
   },
   identityPillText: {
     color: "#CFE9FF",
     fontSize: 12,
     fontFamily: "Montserrat-Regular",
   },
+  // Relationship-intent pill: the most important dating info, given the
+  // onboarding "selected" treatment (blue fill, teal border + glow, bold text).
+  identityPillPrimary: {
+    backgroundColor: "rgba(42,125,225,0.12)",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "rgba(60,246,213,0.35)",
+    shadowColor: "#3CF6D5",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  identityPillPrimaryText: {
+    color: "#EAF6FF",
+    fontSize: 12,
+    fontFamily: "Montserrat-Bold",
+  },
+  // Sections are separated by a hairline divider with symmetric spacing.
   section: {
-    marginBottom: 28,
+    marginTop: 28,
+    paddingTop: 28,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.07)",
   },
   sectionLabel: {
-    color: "rgba(234,246,255,0.28)",
+    color: "#6A8FAF",
     fontSize: 10,
     fontFamily: "Montserrat-Bold",
     textTransform: "uppercase",
@@ -332,7 +378,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   promptQ: {
-    color: "rgba(234,246,255,0.26)",
+    color: "#6A8FAF",
     fontSize: 11,
     fontFamily: "Montserrat-Regular",
     marginBottom: 10,
@@ -343,13 +389,15 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     fontFamily: "Montserrat-Regular",
   },
+  // Interest pills: neutral surface chips so teal stays reserved for the
+  // relationship-intent pill and other intentional accents.
   pill: {
-    backgroundColor: "rgba(60,246,213,0.03)",
+    backgroundColor: "#0d1f33",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "rgba(60,246,213,0.09)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   pillText: {
     color: "#EAF6FF",
@@ -363,7 +411,7 @@ const styles = StyleSheet.create({
     marginBottom: 7,
   },
   phraseText: {
-    color: "rgba(234,246,255,0.62)",
+    color: "#8FA9C0",
     fontSize: 14,
     fontFamily: "Montserrat-Regular",
   },

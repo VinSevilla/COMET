@@ -23,7 +23,7 @@ export default function Profile() {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("id, name, age, gender, dating_intent, interests, prompts, photos, lifestyle, career")
+      .select("id, name, age, gender, dating_intent, interests, prompts, photos, verified_photos, lifestyle, career")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {

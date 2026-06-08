@@ -929,9 +929,10 @@ export default function Onboarding() {
     // Upload photos to Storage first, then store their public URLs on the
     // profile. `data.photos` can be sparse (filled by slot index), so drop
     // any empty slots before uploading.
+    const localUris = data.photos.filter(Boolean);
     let photoUrls: string[] = [];
     try {
-      photoUrls = await uploadPhotos(data.photos.filter(Boolean), user.id);
+      photoUrls = await uploadPhotos(localUris, user.id);
     } catch (e: any) {
       setSaving(false);
       Alert.alert(
@@ -940,6 +941,12 @@ export default function Onboarding() {
       );
       return;
     }
+
+    // `uploadPhotos` returns URLs in the same order as `localUris`, so a photo
+    // is verified if its original local URI was a live (camera) photo.
+    const verifiedUrls = photoUrls.filter((_, i) =>
+      livePhotoUris.includes(localUris[i]),
+    );
 
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
@@ -958,6 +965,7 @@ export default function Onboarding() {
       lifestyle: data.lifestyle,
       career: data.career,
       photos: photoUrls,
+      verified_photos: verifiedUrls,
     });
 
     setSaving(false);

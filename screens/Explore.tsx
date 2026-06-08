@@ -28,7 +28,7 @@ export default function Explore() {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("id, name, age, gender, dating_intent, interests, prompts, photos, lifestyle, career")
+      .select("id, name, age, gender, dating_intent, interests, prompts, photos, verified_photos, lifestyle, career")
       .neq("id", user.id)
       .then(({ data }) => {
         setProfiles(data ?? []);

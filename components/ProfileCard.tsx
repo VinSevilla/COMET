@@ -25,6 +25,7 @@ export type ProfileData = {
   interests: string[];
   prompts: PromptEntry[];
   photos: string[];
+  verified_photos?: string[] | null;
   lifestyle?: { drink?: string; smoke?: string; workout?: string } | null;
   career?: { school?: string; work?: string } | null;
 };
@@ -56,7 +57,15 @@ const WORK_LABEL: Record<string, string> = {
   "Full-Time": "Works full-time",
 };
 
-function PhotoSwiper({ photos, name }: { photos: string[]; name: string }) {
+function PhotoSwiper({
+  photos,
+  name,
+  verifiedPhotos,
+}: {
+  photos: string[];
+  name: string;
+  verifiedPhotos?: string[] | null;
+}) {
   const [photoIndex, setPhotoIndex] = useState(0);
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -83,7 +92,19 @@ function PhotoSwiper({ photos, name }: { photos: string[]; name: string }) {
         style={styles.photoScroll}
       >
         {photos.map((uri, i) => (
-          <Image key={i} source={{ uri }} style={styles.photo} />
+          <View key={i} style={styles.photoSlide}>
+            <Image source={{ uri }} style={styles.photo} />
+            {verifiedPhotos?.includes(uri) && (
+              <View style={styles.verifiedBadge} pointerEvents="none">
+                <MaterialCommunityIcons
+                  name="check-decagram"
+                  size={14}
+                  color="#3CF6D5"
+                />
+                <Text style={styles.verifiedBadgeText}>Verified</Text>
+              </View>
+            )}
+          </View>
         ))}
       </ScrollView>
 
@@ -104,7 +125,11 @@ function PhotoSwiper({ photos, name }: { photos: string[]; name: string }) {
 export default function ProfileCard({ profile }: { profile: ProfileData }) {
   return (
     <View>
-      <PhotoSwiper photos={profile.photos} name={profile.name} />
+      <PhotoSwiper
+        photos={profile.photos}
+        name={profile.name}
+        verifiedPhotos={profile.verified_photos}
+      />
 
       <View style={styles.info}>
         {/* Name + identity pills */}
@@ -204,10 +229,33 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: PHOTO_HEIGHT,
   },
+  photoSlide: {
+    width: SCREEN_WIDTH,
+    height: PHOTO_HEIGHT,
+  },
   photo: {
     width: SCREEN_WIDTH,
     height: PHOTO_HEIGHT,
     resizeMode: "cover",
+  },
+  verifiedBadge: {
+    position: "absolute",
+    bottom: 14,
+    left: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(60,246,213,0.13)",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "rgba(60,246,213,0.35)",
+  },
+  verifiedBadgeText: {
+    color: "#3CF6D5",
+    fontSize: 11,
+    fontFamily: "Montserrat-Bold",
   },
   photoPlaceholder: {
     width: SCREEN_WIDTH,

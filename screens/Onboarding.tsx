@@ -875,6 +875,42 @@ export default function Onboarding() {
 
   // ─── Save to Supabase ──────────────────────────────────────────────────────
 
+  // Uploads each local photo URI to the `profile-photos` Storage bucket and
+  // returns an array of public URLs (preserving order). Throws on failure.
+  async function uploadPhotos(uris: string[], userId: string): Promise<string[]> {
+    const urls: string[] = [];
+    for (let i = 0; i < uris.length; i++) {
+      const uri = uris[i];
+      // RN/Expo: read the local file:// URI into an ArrayBuffer for upload.
+      const arraybuffer = await fetch(uri).then((res) => res.arrayBuffer());
+      // Derive a content type the bucket accepts from the file extension.
+      // Anything unrecognized falls back to JPEG (expo-image-picker with
+      // allowsEditing typically returns JPEG).
+      const ext = (uri.split(".").pop() || "jpg").toLowerCase().split("?")[0];
+      const MIME: Record<string, string> = {
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        webp: "image/webp",
+      };
+      const contentType = MIME[ext] ?? "image/jpeg";
+      // Use a normalized extension in the path so it matches the content type.
+      const safeExt = MIME[ext] ? ext : "jpg";
+      const path = `${userId}/${Date.now()}-${i}.${safeExt}`;
+
+      const { error } = await supabase.storage
+        .from("profile-photos")
+        .upload(path, arraybuffer, { contentType, upsert: true });
+      if (error) throw error;
+
+      const { data: pub } = supabase.storage
+        .from("profile-photos")
+        .getPublicUrl(path);
+      urls.push(pub.publicUrl);
+    }
+    return urls;
+  }
+
   async function saveProfile() {
     if (!user) return;
     setSaving(true);
@@ -889,6 +925,21 @@ export default function Onboarding() {
       (monthDiff === 0 && today.getDate() < birthDate.getDate())
     )
       age--;
+
+    // Upload photos to Storage first, then store their public URLs on the
+    // profile. `data.photos` can be sparse (filled by slot index), so drop
+    // any empty slots before uploading.
+    let photoUrls: string[] = [];
+    try {
+      photoUrls = await uploadPhotos(data.photos.filter(Boolean), user.id);
+    } catch (e: any) {
+      setSaving(false);
+      Alert.alert(
+        "Photo upload failed",
+        e?.message ?? "Could not upload your photos. Please try again.",
+      );
+      return;
+    }
 
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
@@ -906,8 +957,7 @@ export default function Onboarding() {
       location_lng: data.locationLng,
       lifestyle: data.lifestyle,
       career: data.career,
-      // Photos upload to Supabase Storage is a future step.
-      // For now we store nothing — photos will be added later.
+      photos: photoUrls,
     });
 
     setSaving(false);

@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(npm uninstall:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(xcrun simctl *)",
+      "Bash(xcode-select -p)",
+      "Bash(ps -o etime= -p 72949)",
+      "Bash(open -a Simulator)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('expo:', \\(p.dependencies||{}\\).expo\\); console.log\\('react-native:', \\(p.dependencies||{}\\)['react-native']\\); console.log\\('scripts:', JSON.stringify\\(p.scripts\\)\\)\")",
+      "Bash(npx expo *)",
+      "Bash(lsof -iTCP:8081 -sTCP:LISTEN -n -P)",
+      "Bash(curl -s -m 3 http://localhost:8081/status)",
+      "Bash(node -e \"const p=require\\('./package.json'\\);const d={...p.dependencies};console.log\\('expo-file-system:',d['expo-file-system']\\);console.log\\('expo-image-picker:',d['expo-image-picker']\\);console.log\\('base64-arraybuffer:',d['base64-arraybuffer']\\)\")"
     ]
   }
 }

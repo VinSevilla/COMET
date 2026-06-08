@@ -98,7 +98,7 @@ function PhotoSwiper({
               <View style={styles.verifiedBadge} pointerEvents="none">
                 <MaterialCommunityIcons
                   name="check-decagram"
-                  size={14}
+                  size={13}
                   color="#3CF6D5"
                 />
                 <Text style={styles.verifiedBadgeText}>Verified</Text>
@@ -241,24 +241,27 @@ const styles = StyleSheet.create({
     height: PHOTO_HEIGHT,
     resizeMode: "cover",
   },
+  // Smoked-glass badge: dark translucent fill lets the photo show through, a
+  // light hairline reads as glass, and teal is reserved for just the checkmark.
   verifiedBadge: {
     position: "absolute",
-    bottom: 14,
-    left: 16,
+    bottom: 12,
+    left: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(60,246,213,0.13)",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 5,
+    backgroundColor: "rgba(8,20,33,0.55)",
+    borderRadius: 11,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
     borderWidth: 1,
-    borderColor: "rgba(60,246,213,0.35)",
+    borderColor: "rgba(255,255,255,0.16)",
   },
   verifiedBadgeText: {
-    color: "#3CF6D5",
-    fontSize: 11,
+    color: "#EAF6FF",
+    fontSize: 10,
     fontFamily: "Montserrat-Bold",
+    letterSpacing: 0.3,
   },
   photoPlaceholder: {
     width: SCREEN_WIDTH,
@@ -306,7 +309,11 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
   },
   identityBlock: {
-    marginBottom: 0,
+    // The single divider that matters: separates the identity header from the
+    // detail sections, keeping the user the focal point.
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.07)",
   },
   eyebrow: {
     color: "rgba(60,246,213,0.55)",
@@ -314,7 +321,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Bold",
     textTransform: "uppercase",
     letterSpacing: 2,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   name: {
     fontSize: 30,
@@ -362,12 +369,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Montserrat-Bold",
   },
-  // Sections are separated by a hairline divider with symmetric spacing.
+  // Detail sections are separated by whitespace + their labels (no rules) to
+  // keep the card calm and uncluttered.
   section: {
-    marginTop: 28,
-    paddingTop: 28,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.07)",
+    marginTop: 30,
   },
   sectionLabel: {
     color: "#6A8FAF",
@@ -389,15 +394,15 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     fontFamily: "Montserrat-Regular",
   },
-  // Interest pills: neutral surface chips so teal stays reserved for the
-  // relationship-intent pill and other intentional accents.
+  // Interest pills: neutral navy chips, lifted enough to read clearly against
+  // the panel while staying calmer than the teal relationship-intent pill.
   pill: {
-    backgroundColor: "#0d1f33",
+    backgroundColor: "#142c46",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(255,255,255,0.10)",
   },
   pillText: {
     color: "#EAF6FF",

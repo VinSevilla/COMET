@@ -572,6 +572,8 @@ export default function Onboarding() {
   const [showPhotoSheet, setShowPhotoSheet] = useState(false);
   const [pendingSlot, setPendingSlot] = useState<number>(0);
   const [livePhotoUris, setLivePhotoUris] = useState<string[]>([]);
+  // local photo URI -> public URL, so retrying a failed save skips re-uploads
+  const uploadedPhotoUrls = useRef<Record<string, string>>({});
   const sheetAnim = useRef(new Animated.Value(300)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const stepOpacity = useRef(new Animated.Value(1)).current;
@@ -915,24 +917,19 @@ export default function Onboarding() {
     if (!user) return;
     setSaving(true);
 
-    // Calculate age from birthday
-    const birthDate = new Date(data.birthday);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    )
-      age--;
-
     // Upload photos to Storage first, then store their public URLs on the
     // profile. `data.photos` can be sparse (filled by slot index), so drop
-    // any empty slots before uploading.
+    // any empty slots before uploading. Already-uploaded photos are reused so
+    // a retry after a failed save doesn't upload them again.
     const localUris = data.photos.filter(Boolean);
     let photoUrls: string[] = [];
     try {
-      photoUrls = await uploadPhotos(localUris, user.id);
+      const pending = localUris.filter((uri) => !uploadedPhotoUrls.current[uri]);
+      const newUrls = await uploadPhotos(pending, user.id);
+      pending.forEach((uri, i) => {
+        uploadedPhotoUrls.current[uri] = newUrls[i];
+      });
+      photoUrls = localUris.map((uri) => uploadedPhotoUrls.current[uri]);
     } catch (e: any) {
       setSaving(false);
       Alert.alert(
@@ -942,36 +939,42 @@ export default function Onboarding() {
       return;
     }
 
-    // `uploadPhotos` returns URLs in the same order as `localUris`, so a photo
-    // is verified if its original local URI was a live (camera) photo.
-    const verifiedUrls = photoUrls.filter((_, i) =>
-      livePhotoUris.includes(localUris[i]),
-    );
-
-    const { error } = await supabase.from("profiles").upsert({
-      id: user.id,
-      name: data.name,
-      birthday: data.birthday,
-      age,
-      gender: data.gender,
-      looking_for: data.lookingFor,
-      interests: data.interests,
-      prompts: data.prompts,
-      dating_intent: data.datingIntent,
-      preferred_age_min: data.ageRange[0],
-      preferred_age_max: data.ageRange[1],
-      location_lat: data.locationLat,
-      location_lng: data.locationLng,
-      lifestyle: data.lifestyle,
-      career: data.career,
-      photos: photoUrls,
-      verified_photos: verifiedUrls,
-    });
+    // Saves public fields to `profiles` and private fields (birthday, location)
+    // to `private_profiles` in one transaction. The server uses the signed-in
+    // user's id, computes age, enforces 18+, and leaves verified_photos empty
+    // (photo verification isn't trusted from the client).
+    let errorMessage: string | null = null;
+    try {
+      const { error } = await supabase.rpc("complete_onboarding", {
+        p_name: data.name,
+        p_birthday: data.birthday,
+        p_gender: data.gender,
+        p_looking_for: data.lookingFor,
+        p_interests: data.interests,
+        p_prompts: data.prompts,
+        p_dating_intent: data.datingIntent,
+        p_preferred_age_min: data.ageRange[0],
+        p_preferred_age_max: data.ageRange[1],
+        p_preferred_distance: data.preferredDistance,
+        p_lifestyle: data.lifestyle,
+        p_career: data.career,
+        p_photos: photoUrls,
+        p_location_lat: data.locationLat,
+        p_location_lng: data.locationLng,
+      });
+      if (error) errorMessage = error.message;
+    } catch (e: any) {
+      errorMessage = e?.message ?? "Network error.";
+    }
 
     setSaving(false);
 
-    if (error) {
-      Alert.alert("Error", error.message);
+    if (errorMessage) {
+      // Form state is untouched, so the user can fix the issue and tap again.
+      Alert.alert(
+        "Couldn't save your profile",
+        `${errorMessage}\n\nYour answers are still here. Please try again.`,
+      );
       return;
     }
 
